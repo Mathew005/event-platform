@@ -19,17 +19,44 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [userType, setUserType] = useState('participant')
   const [formKey, setFormKey] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const data = Object.fromEntries(formData)
     
-    // Here you would typically send this data to your backend
-    console.log(data)
-    
-    // Placeholder for success message
-    alert(isLogin ? "Logged in successfully!" : "Registered successfully!")
+    setLoading(true)
+    setErrorMessage('')
+
+    try {
+      const response = await fetch('https://localhost/cfc/auth.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: isLogin ? 'login' : 'register',
+          ...data,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert(result.message)
+        // Optionally reset the form
+        event.currentTarget.reset()
+      } else {
+        setErrorMessage(result.message)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      setErrorMessage('An error occurred. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -53,6 +80,8 @@ export default function AuthPage() {
           </div>
         </div>
 
+        {errorMessage && <div className="mb-4 text-red-500">{errorMessage}</div>}
+
         <form key={formKey} onSubmit={handleSubmit} className="space-y-4">
           {isLogin ? (
             <>
@@ -62,7 +91,7 @@ export default function AuthPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
+                <Input id="password" name="password" type="password" autoComplete="on" required />
               </div>
             </>
           ) : (
@@ -108,7 +137,7 @@ export default function AuthPage() {
               
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
+                <Input id="password" name="password" type="password" autoComplete="on" required />
               </div>
               
               <div className="space-y-2">
@@ -145,8 +174,8 @@ export default function AuthPage() {
               )}
             </>
           )}
-          <Button type="submit" className="w-full">
-            {isLogin ? 'Login' : 'Register'}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Register')}
           </Button>
         </form>
       </div>
