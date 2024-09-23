@@ -65,8 +65,9 @@ export default function AuthPage() {
   }, [isLogin])
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+    <div className="min-h-screen bg-cover bg-gray-100 bg-center flex items-center justify-center p-4" style={{backgroundImage: "url('/placeholder.svg?height=1080&width=1920')"}}>
+      <div className="absolute inset-0 backdrop-blur-sm"></div>
+      <div className="bg-white/80 p-8 rounded-lg shadow-md w-full max-w-md relative z-10 transition-all duration-3000 ease-in-out">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">{isLogin ? 'Login' : 'Register'}</h1>
           <div className="flex flex-col items-end">
@@ -158,13 +159,6 @@ export default function AuthPage() {
                   <Input id="contactNumber" name="contactNumber" type="tel" required className="flex-1" />
                 </div>
               </div>
-              
-              {userType === 'participant' && (
-                <div className="space-y-2">
-                  <Label htmlFor="interests">Interests (comma-separated)</Label>
-                  <Input id="interests" name="interests" placeholder="e.g., Music, Sports, Technology" />
-                </div>
-              )}
               
               {userType === 'organizer' && (
                 <div className="space-y-2">
