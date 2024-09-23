@@ -4,5 +4,5 @@ import ProfileEdit from './profile-edit';
 import SettingsPage from './settings-page';
 
 export default function Home() {
-  return <SettingsPage />
+  return <ProfileEdit />
 }

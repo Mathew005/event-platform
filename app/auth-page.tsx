@@ -21,14 +21,23 @@ export default function AuthPage() {
   const [formKey, setFormKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const data = Object.fromEntries(formData)
     
+    if (!isLogin && password !== confirmPassword) {
+      setPasswordError("Passwords don't match")
+      return
+    }
+
     setLoading(true)
     setErrorMessage('')
+    setPasswordError('')
 
     try {
       const response = await fetch('https://localhost/cfc/auth.php', {
@@ -48,6 +57,8 @@ export default function AuthPage() {
         alert(result.message)
         // Optionally reset the form
         event.currentTarget.reset()
+        setPassword('')
+        setConfirmPassword('')
       } else {
         setErrorMessage(result.message)
       }
@@ -62,12 +73,15 @@ export default function AuthPage() {
   useEffect(() => {
     // Reset form when switching between login and register
     setFormKey(prevKey => prevKey + 1)
+    setPassword('')
+    setConfirmPassword('')
+    setPasswordError('')
   }, [isLogin])
 
   return (
-    <div className="min-h-screen bg-cover bg-gray-100 bg-center flex items-center justify-center p-4" style={{backgroundImage: "url('/placeholder.svg?height=1080&width=1920')"}}>
+    <div className="min-h-screen bg-cover bg-center flex items-center justify-center p-4" style={{backgroundImage: "url('/placeholder.svg?height=1080&width=1920')"}}>
       <div className="absolute inset-0 backdrop-blur-sm"></div>
-      <div className="bg-white/80 p-8 rounded-lg shadow-md w-full max-w-md relative z-10 transition-all duration-3000 ease-in-out">
+      <div className="bg-white/80 p-8 rounded-lg shadow-md w-full max-w-md relative z-10 transition-all duration-300 ease-in-out">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">{isLogin ? 'Login' : 'Register'}</h1>
           <div className="flex flex-col items-end">
@@ -92,7 +106,13 @@ export default function AuthPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" autoComplete="on" required />
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type="password" 
+                  autoComplete="current-password" 
+                  required 
+                />
               </div>
             </>
           ) : (
@@ -138,8 +158,31 @@ export default function AuthPage() {
               
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" autoComplete="on" required />
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type="password" 
+                  autoComplete="new-password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input 
+                  id="confirmPassword" 
+                  name="confirmPassword" 
+                  type="password" 
+                  autoComplete="new-password" 
+                  required 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+
+              {passwordError && <div className="text-red-500">{passwordError}</div>}
               
               <div className="space-y-2">
                 <Label htmlFor="contactNumber">Contact Number</Label>

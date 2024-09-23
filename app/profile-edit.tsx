@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { X, ChevronLeft, Plus } from "lucide-react"
@@ -78,7 +78,6 @@ const districts = [
   },
 ];
 
-
 const defaultAvatars = [
   "https://github.com/shadcn.png", "/avatar2.png", "/avatar3.png", "/avatar4.png",
   "/avatar5.png", "/avatar6.png", "/avatar7.png",
@@ -112,6 +111,7 @@ export default function ProfileEdit() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [isCropping, setIsCropping] = useState(false)
   const [tempImage, setTempImage] = useState("")
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
 
   const handleAvatarChange = (newAvatar: string) => {
     setAvatar(newAvatar)
@@ -146,6 +146,11 @@ export default function ProfileEdit() {
   const handlePasswordChange = () => {
     if (newPassword === confirmPassword) {
       console.log("Password changed")
+      // Here you would typically call an API to update the password
+      setIsPasswordDialogOpen(false)
+      setOldPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
     } else {
       console.log("Passwords do not match")
     }
@@ -394,43 +399,57 @@ export default function ProfileEdit() {
       </div>
 
       <div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button>Change Password</Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="old-password">Old Password</Label>
+        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">Change Password</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Change Password</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="old-password" className="text-right">
+                  Old Password
+                </Label>
                 <Input
                   id="old-password"
                   type="password"
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
+                  className="col-span-3"
                 />
               </div>
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="new-password" className="text-right">
+                  New Password
+                </Label>
                 <Input
                   id="new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  className="col-span-3"
                 />
               </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="confirm-password" className="text-right">
+                  Confirm Password
+                </Label>
                 <Input
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="col-span-3"
                 />
               </div>
-              <Button onClick={handlePasswordChange}>Update Password</Button>
             </div>
-          </PopoverContent>
-        </Popover>
+            <DialogFooter>
+              <Button onClick={handlePasswordChange}>Update Password</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Button className="w-full">Save Changes</Button>
