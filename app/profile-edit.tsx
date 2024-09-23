@@ -4,7 +4,6 @@ import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -14,10 +13,75 @@ import { X, ChevronLeft, Plus } from "lucide-react"
 import Cropper from "react-easy-crop"
 import { getCroppedImg } from "@/lib/cropImage"
 import { Calendar } from "@/components/ui/calendar"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,} from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const districts = [
+  {
+    value: "thiruvananthapuram",
+    label: "Thiruvananthapuram",
+  },
+  {
+    value: "kollam",
+    label: "Kollam",
+  },
+  {
+    value: "pathanamthitta",
+    label: "Pathanamthitta",
+  },
+  {
+    value: "alappuzha",
+    label: "Alappuzha",
+  },
+  {
+    value: "kottayam",
+    label: "Kottayam",
+  },
+  {
+    value: "idukki",
+    label: "Idukki",
+  },
+  {
+    value: "ernakulam",
+    label: "Ernakulam",
+  },
+  {
+    value: "thrissur",
+    label: "Thrissur",
+  },
+  {
+    value: "palakkad",
+    label: "Palakkad",
+  },
+  {
+    value: "malappuram",
+    label: "Malappuram",
+  },
+  {
+    value: "kozhikode",
+    label: "Kozhikode",
+  },
+  {
+    value: "wayanad",
+    label: "Wayanad",
+  },
+  {
+    value: "kannur",
+    label: "Kannur",
+  },
+  {
+    value: "kasaragod",
+    label: "Kasaragod",
+  },
+];
+
 
 const defaultAvatars = [
-  "/avatar1.png", "/avatar2.png", "/avatar3.png", "/avatar4.png",
-  "/avatar5.png", "/avatar6.png", "/avatar7.png", "/avatar8.png",
+  "https://github.com/shadcn.png", "/avatar2.png", "/avatar3.png", "/avatar4.png",
+  "/avatar5.png", "/avatar6.png", "/avatar7.png",
 ]
 
 const interestCategories = {
@@ -35,11 +99,13 @@ export default function ProfileEdit() {
   const [avatar, setAvatar] = useState("/avatar1.png")
   const [course, setCourse] = useState("Computer Science")
   const [department, setDepartment] = useState("Engineering")
+  const [institute, setInstitute] = useState("SCMS")
   const [interests, setInterests] = useState<string[]>([])
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [dob, setDob] = useState<Date | undefined>(new Date())
+  const [locationOpen, setLocationOpen] = useState(false)
   const [location, setLocation] = useState("")
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -193,6 +259,15 @@ export default function ProfileEdit() {
             onChange={(e) => setDepartment(e.target.value)}
           />
         </div>
+        
+        <div>
+          <Label htmlFor="institute">Institute</Label>
+          <Input
+            id="institute"
+            value={institute}
+            onChange={(e) => setInstitute(e.target.value)}
+          />
+        </div>
         <div>
           <Label htmlFor="dob">Date of Birth</Label>
           <Popover>
@@ -212,13 +287,50 @@ export default function ProfileEdit() {
           </Popover>
         </div>
         <div>
-          <Label htmlFor="location">Location Preference</Label>
-          <Input
-            id="location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter your preferred location"
-          />
+          <Label htmlFor="location">Location Preference</Label><br></br>
+          <Popover open={locationOpen} onOpenChange={setLocationOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={locationOpen}
+          className="w-[200px] justify-between"
+        >
+          {location
+            ? districts.find((district) => district.value === location)?.label
+            : "Select district..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search district..." />
+          <CommandList>
+            <CommandEmpty>No district found.</CommandEmpty>
+            <CommandGroup>
+              {districts.map((district) => (
+                <CommandItem
+                  key={district.value}
+                  value={district.value}
+                  onSelect={(currentValue) => {
+                    setLocation(currentValue === location ? "" : currentValue)
+                    setLocationOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      location === district.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {district.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
         </div>
       </div>
 
