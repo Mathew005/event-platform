@@ -66,84 +66,9 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="flex items-center">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="default" className="mr-2">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Event
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Create New Event</DialogTitle>
-                    <DialogDescription>
-                      Fill in the details to create a new event.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="title" className="text-right">
-                        Title
-                      </label>
-                      <Input id="title" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="date" className="text-right">
-                        Date
-                      </label>
-                      <Input id="date" type="date" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="time" className="text-right">
-                        Time
-                      </label>
-                      <Input id="time" type="time" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="location" className="text-right">
-                        Location
-                      </label>
-                      <Input id="location" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="category" className="text-right">
-                        Category
-                      </label>
-                      <Select>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="contact" className="text-right">
-                        Contact
-                      </label>
-                      <Input id="contact" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="description" className="text-right">
-                        Description
-                      </label>
-                      <Textarea id="description" className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="image" className="text-right">
-                        Image
-                      </label>
-                      <Input id="image" type="file" className="col-span-3" />
-                    </div>
-                  </form>
-                  <DialogFooter>
-                    <Button type="submit">Create Event</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <Button variant="default" className="mr-2">
+                    Dashboard
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -164,10 +89,7 @@ export default function LandingPage() {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    <span>Switch Account</span>
-                  </DropdownMenuItem>
+                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <LogOut className="mr-2 h-4 w-4" />
