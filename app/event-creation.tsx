@@ -497,7 +497,7 @@ export default function Component() {
                                                     setCoordinators(newCoordinators);
                                                 }}
                                             />
-                                            <Label htmlFor={`faculty-${index}`}>Faculty</Label>
+                                            <Label htmlFor={`faculty-${index}`}>This Coordinator is a Faculty</Label>
                                         </div>
                                         {index > 0 && (
                                             <Button
