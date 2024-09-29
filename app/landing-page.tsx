@@ -25,7 +25,7 @@ const events = [
 
 const categories = ['Music', 'Technology', 'Food', 'Sports', 'Art', 'Business', 'Health', 'Education']
 
-export default function LandingPage() {
+export default function Component() {
   const [activeTab, setActiveTab] = useState("all")
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)

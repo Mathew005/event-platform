@@ -92,7 +92,7 @@ const interestCategories = {
   "Lifestyle": ["Fashion", "Cooking", "Travel", "Photography", "Fitness"]
 }
 
-export default function ProfileEdit() {
+export default function Component() {
   const [name, setName] = useState("John Doe")
   const [email, setEmail] = useState("john.doe@example.com")
   const [avatar, setAvatar] = useState("/avatar1.png")

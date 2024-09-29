@@ -17,7 +17,7 @@ interface FAQItem {
   userVote: 'up' | 'down' | null
 }
 
-export default function SettingsPage() {
+export default function Component() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [faqItems, setFaqItems] = useState<FAQItem[]>([
     { question: "How do I create an event?", answer: "Click the 'Create Event' button in the top right corner of the homepage.", votes: 0, userVote: null },
