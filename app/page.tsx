@@ -6,7 +6,8 @@ import ProgramCreation from './program-creation';
 import EventDashBoard  from './event-dashboard';
 import SettingsPage from './settings-page';
 import EventOverview from './event-overview';
+import RegistrationAnalytics from './registration-analytics';
 
 export default function Home() {
-  return <EventOverview />
+  return <SettingsPage />
 }
