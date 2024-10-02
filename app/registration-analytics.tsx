@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { X, BarChart, Users, Calendar, ArrowUpDown, Download, Search } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { X, BarChart, Users, Calendar, ArrowUp, ArrowDown, Download, Search } from "lucide-react"
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
@@ -37,32 +38,26 @@ const registrationData = [
 
 const groupMembers = {
   1: [
-    { id: 1, name: "John Doe", contact: "123-456-7890", email: "john@example.com" },
     { name: "Team Member 1", contact: "111-111-1111", email: "member1@example.com" },
     { name: "Team Member 2", contact: "222-222-2222", email: "member2@example.com" },
   ],
   3: [
-    { id: 3, name: "Alice Johnson", contact: "111-222-3333", email: "alice@example.com" },
     { name: "Team Member A", contact: "333-333-3333", email: "memberA@example.com" },
     { name: "Team Member B", contact: "444-444-4444", email: "memberB@example.com" },
     { name: "Team Member C", contact: "555-555-5555", email: "memberC@example.com" },
   ],
   4: [
-    { id: 4, name: "Bob Williams", contact: "444-555-6666", email: "bob@example.com" },
     { name: "Team Member X", contact: "666-666-6666", email: "memberX@example.com" },
     { name: "Team Member Y", contact: "777-777-7777", email: "memberY@example.com" },
   ],
   6: [
-    { id: 6, name: "Diana Prince", contact: "000-111-2222", email: "diana@example.com" },
     { name: "Team Member Z", contact: "888-888-8888", email: "memberZ@example.com" },
   ],
   8: [
-    { id: 8, name: "Fiona Gallagher", contact: "666-777-8888", email: "fiona@example.com" },
     { name: "Team Member D", contact: "999-999-9999", email: "memberD@example.com" },
     { name: "Team Member E", contact: "000-000-0000", email: "memberE@example.com" },
   ],
   9: [
-    { id: 9, name: "George Costanza", contact: "999-000-1111", email: "george@example.com" },
     { name: "Team Member F", contact: "111-111-0000", email: "memberF@example.com" },
     { name: "Team Member G", contact: "222-222-0000", email: "memberG@example.com" },
     { name: "Team Member H", contact: "333-333-0000", email: "memberH@example.com" },
@@ -70,6 +65,7 @@ const groupMembers = {
 }
 
 const allEventsHeaders = [
+  { key: 'registrationTime', label: 'Time of Registration' },
   { key: 'id', label: 'Reg ID' },
   { key: 'name', label: 'Participant Name' },
   { key: 'contact', label: 'Contact' },
@@ -78,40 +74,31 @@ const allEventsHeaders = [
   { key: 'collegeName', label: 'College Name' },
   { key: 'eventType', label: 'Event Type' },
   { key: 'participants', label: 'No. of Participants' },
-  { key: 'department', label: 'Department' },
-  { key: 'course', label: 'Course' },
-  { key: 'registrationTime', label: 'Registration Time' },
 ]
 
-const groupEventHeaders = [
-  { key: 'id', label: 'Reg ID' },
-  { key: 'name1', label: 'Participant Name 1' },
-  { key: 'contact1', label: 'Participant 1 Contact' },
-  { key: 'email1', label: 'Participant 1 Email' },
-  { key: 'name2', label: 'Participant Name 2' },
-  { key: 'contact2', label: 'Participant 2 Contact' },
-  { key: 'email2', label: 'Participant 2 Email' },
-  { key: 'name3', label: 'Participant Name 3' },
-  { key: 'contact3', label: 'Participant 3 Contact' },
-  { key: 'email3', label: 'Participant 3 Email' },
-  { key: 'name4', label: 'Participant Name 4' },
-  { key: 'contact4', label: 'Participant 4 Contact' },
-  { key: 'email4', label: 'Participant 4 Email' },
-  { key: 'eventId', label: 'Event Name' },
+const specificEventHeaders = [
+  { key: 'registrationTime', label: 'Time of Registration' },
+  { key: 'name', label: 'Participant Name' },
+  { key: 'contact', label: 'Contact' },
+  { key: 'email', label: 'Email' },
   { key: 'collegeName', label: 'College Name' },
-  { key: 'eventType', label: 'Event Type' },
   { key: 'participants', label: 'No. of Participants' },
-  { key: 'department', label: 'Department' },
-  { key: 'course', label: 'Course' },
-  { key: 'registrationTime', label: 'Registration Time' },
 ]
 
 export default function RegistrationAnalytics({ onClose }: { onClose: () => void }) {
   const [selectedEvent, setSelectedEvent] = useState<number | 'all'>('all')
   const [visibleColumns, setVisibleColumns] = useState<string[]>(allEventsHeaders.map(h => h.key))
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null })
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRows, setSelectedRows] = useState<number[]>([])
+
+  const getHeaders = useMemo(() => {
+    return selectedEvent === 'all' ? allEventsHeaders : specificEventHeaders
+  }, [selectedEvent])
+
+  useEffect(() => {
+    setVisibleColumns(getHeaders.map(h => h.key))
+  }, [getHeaders])
 
   const filteredData = useMemo(() => {
     let filtered = selectedEvent === 'all' 
@@ -126,7 +113,7 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
       )
     }
 
-    if (sortConfig) {
+    if (sortConfig.key && sortConfig.direction) {
       filtered.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1
         if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1
@@ -143,31 +130,25 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
     } else {
       const event = events.find(e => e.id === selectedEvent)
       if (event?.type === 'group') {
-        return groupMembers[selectedEvent as keyof typeof groupMembers]?.length || 0
+        return registrationData.find(reg => reg.eventId === selectedEvent)?.participants || 0
       } else {
         return filteredData[0]?.participants || 0
       }
     }
   }, [selectedEvent, filteredData])
 
-  const headers = selectedEvent === 'all' ? allEventsHeaders : 
-    (events.find(e => e.id === selectedEvent)?.type === 'group' ? groupEventHeaders : allEventsHeaders)
-
-  const selectedEventName = selectedEvent === 'all' ? 'All Programs' : events.find(e => e.id === selectedEvent)?.name || ''
+  const selectedEventInfo = events.find(e => e.id === selectedEvent)
+  const selectedEventName = selectedEvent === 'all' ? 'All Programs' : selectedEventInfo?.name || ''
+  const selectedEventType = selectedEventInfo?.type || ''
 
   const handleSort = (key: string) => {
     setSortConfig(prevConfig => {
-      if (prevConfig && prevConfig.key === key) {
-        return { key, direction: prevConfig.direction === 'asc' ? 'desc' : 'asc' }
+      if (prevConfig.key === key) {
+        if (prevConfig.direction === 'asc') return { key, direction: 'desc' }
+        if (prevConfig.direction === 'desc') return { key: '', direction: null }
       }
       return { key, direction: 'asc' }
     })
-  }
-
-  const toggleColumnVisibility = (key: string) => {
-    setVisibleColumns(prev => 
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-    )
   }
 
   const handleRowSelection = (id: number) => {
@@ -176,19 +157,41 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
     )
   }
 
+  const getExportData = () => {
+    if (selectedRows.length > 0) {
+      return filteredData.filter(row => selectedRows.includes(row.id))
+    }
+    return filteredData
+  }
+
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredData)
+    const dataToExport = getExportData().map(registration => {
+      const row: any = { ...registration }
+      row.eventName = events.find(e => e.id === registration.eventId)?.name || ''
+      if (registration.eventType === 'group') {
+        const members = groupMembers[registration.id] || []
+        members.forEach((member, index) => {
+          row[`member${index + 1}Name`] = member.name
+          row[`member${index + 1}Email`] = member.email
+          row[`member${index + 1}Contact`] = member.contact
+        })
+      }
+      return row
+    })
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Registrations")
     XLSX.writeFile(wb, "registrations.xlsx")
   }
 
   const exportToPDF = () => {
+    const dataToExport = getExportData()
     const doc = new jsPDF()
     doc.autoTable({
-      head: [headers.filter(h => visibleColumns.includes(h.key)).map(h => h.label)],
-      body: filteredData.map(row => 
-        headers.filter(h => visibleColumns.includes(h.key)).map(h => row[h.key])
+      head: [getHeaders.map(h => h.label)],
+      body: dataToExport.map(row => 
+        getHeaders.map(h => row[h.key])
       ),
     })
     doc.save("registrations.pdf")
@@ -198,15 +201,27 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
     <div className="fixed inset-0 bg-gradient-to-br from-background to-secondary/20 z-50 overflow-y-auto">
       <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen flex flex-col">
         <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-2xl md:text-3xl font-bold">Registration Analytics</CardTitle>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground">
-              <X className="h-6 w-6" />
-              <span className="sr-only">Close</span>
-            </Button>
+          <CardHeader className="flex flex-col space-y-1.5 pb-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-2xl md:text-3xl font-bold">Registration Analytics</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Event: {selectedEventName}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="text-muted-foreground"
+              >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Registrations</CardTitle>
@@ -234,27 +249,6 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
                   <div className="text-2xl font-bold">{events.length}</div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Select Event</CardTitle>
-                  <BarChart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <Select onValueChange={(value) => setSelectedEvent(value === 'all' ? 'all' : Number(value))}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select an event" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Programs</SelectItem>
-                      {events.map((event) => (
-                        <SelectItem key={event.id} value={event.id.toString()}>
-                          {event.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
             </div>
           </CardContent>
         </Card>
@@ -262,49 +256,40 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
         <Card>
           <CardHeader>
             <CardTitle>Registration Details</CardTitle>
-            <p className="text-sm text-muted-foreground">Showing data for: {selectedEventName}</p>
+            <p className="text-sm text-muted-foreground">
+              Showing data for: {selectedEventName}{selectedEvent !== 'all' ? ` - ${selectedEventType}` : ''}
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center mb-4">
+              <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-2 md:items-center">
+                <Select 
+                  defaultValue="all"
+                  onValueChange={(value) => setSelectedEvent(value === 'all' ? 'all' : Number(value))}
+                >
+                  <SelectTrigger className="w-[300px]">
+                    <SelectValue placeholder="Select an event" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Programs</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id.toString()}>
+                        <span className="truncate">{event.name}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-sm"
                 />
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="flex items-center space-x-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">Columns</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {headers.map((header) => (
-                      <DropdownMenuCheckboxItem
-                        key={header.key}
-                        checked={visibleColumns.includes(header.key)}
-                        onCheckedChange={() => toggleColumnVisibility(header.key)}
-                      >
-                        {header.label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button onClick={exportToExcel}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Excel
-                </Button>
-                <Button onClick={exportToPDF}>
-                  <Download className="mr-2 h-4 w-4" />
-                  PDF
-                </Button>
               </div>
             </div>
             <div className="rounded-md border overflow-x-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/80">
                   <TableRow>
                     <TableHead className="w-[50px]">
                       <Checkbox
@@ -314,61 +299,95 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
                         }}
                       />
                     </TableHead>
-                    {headers.filter(h => visibleColumns.includes(h.key)).map((header) => (
-                      <TableHead key={header.key} className="cursor-pointer" onClick={() => handleSort(header.key)}>
+                    {getHeaders.map((header) => (
+                      <TableHead
+                        key={header.key}
+                        className="cursor-pointer"
+                        onClick={() => handleSort(header.key)}
+                      >
                         <div className="flex items-center">
                           {header.label}
-                          {sortConfig?.key === header.key && (
-                            <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.direction === 'asc' ? 'transform rotate-180' : ''}`} />
+                          {sortConfig.key === header.key && (
+                            sortConfig.direction === 'asc' ? (
+                              <ArrowUp className="ml-2 h-4 w-4" />
+                            ) : sortConfig.direction === 'desc' ? (
+                              <ArrowDown className="ml-2 h-4 w-4" />
+                            ) : null
                           )}
                         </div>
                       </TableHead>
                     ))}
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredData.map((registration) => {
-                    const isGroupEvent = events.find(e => e.id === registration.eventId)?.type === 'group'
-                    const groupData = isGroupEvent ? groupMembers[registration.id as keyof typeof groupMembers] : []
-                    return (
-                      <TableRow key={registration.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRows.includes(registration.id)}
-                            onCheckedChange={() => handleRowSelection(registration.id)}
-                          />
+                  {filteredData.map((registration, index) => (
+                    <TableRow key={registration.id} className={index % 2 === 0 ? 'bg-muted/30' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedRows.includes(registration.id)}
+                          onCheckedChange={() => handleRowSelection(registration.id)}
+                        />
+                      </TableCell>
+                      {getHeaders.map((header) => (
+                        <TableCell key={header.key}>
+                          {header.key === 'eventId'
+                            ? events.find(e => e.id === registration[header.key])?.name
+                            : header.key === 'registrationTime'
+                              ? new Date(registration[header.key]).toLocaleString()
+                              : registration[header.key]}
                         </TableCell>
-                        {headers.filter(h => visibleColumns.includes(h.key)).map((header) => {
-                          if (selectedEvent === 'all' || !isGroupEvent) {
-                            // For "All Events" view or solo events, show the primary registrant's details
-                            if (header.key === 'name' || header.key === 'contact' || header.key === 'email') {
-                              return <TableCell key={header.key}>{registration[header.key as keyof typeof registration]}</TableCell>
-                            }
-                          } else if (header.key.startsWith('name') || header.key.startsWith('contact') || header.key.startsWith('email')) {
-                            const index = parseInt(header.key.slice(-1)) - 1
-                            const participant = groupData[index] || {}
-                            const keyWithoutNumber = header.key.replace(/\d+$/, '') as keyof typeof participant;
-                            return (
-                              <TableCell key={header.key}>
-                                {participant[keyWithoutNumber] || ''}
-                              </TableCell>
-                            )
-                          }
-                          return (
-                            <TableCell key={header.key}>
-                              {header.key === 'eventId'
-                                ? events.find(e => e.id === registration.eventId)?.name
-                                : header.key === 'registrationTime'
-                                  ? new Date(registration[header.key as keyof typeof registration]).toLocaleString()
-                                  : registration[header.key as keyof typeof registration]}
-                            </TableCell>
-                          )
-                        })}
-                      </TableRow>
-                    )
-                  })}
+                      ))}
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="secondary" size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                              View Details
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Registration Details</DialogTitle>
+                            </DialogHeader>
+                            <ScrollArea className="max-h-[60vh] overflow-y-auto">
+                              <div className="space-y-4">
+                                {Object.entries(registration).map(([key, value]) => (
+                                  <div key={key} className="flex flex-col">
+                                    <span className="text-sm font-medium text-muted-foreground">{allEventsHeaders.find(h => h.key === key)?.label || key}</span>
+                                    <span className="text-sm">{key === 'eventId' ? events.find(e => e.id === value)?.name : value}</span>
+                                  </div>
+                                ))}
+                                {registration.eventType === 'group' && (
+                                  <div className="mt-4">
+                                    <h4 className="text-sm font-medium mb-2">Group Members</h4>
+                                    {groupMembers[registration.id]?.map((member, index) => (
+                                      <div key={index} className="mb-2 p-2 bg-muted rounded-md">
+                                        <p className="text-sm"><strong>Name:</strong> {member.name}</p>
+                                        <p className="text-sm"><strong>Contact:</strong> {member.contact}</p>
+                                        <p className="text-sm"><strong>Email:</strong> {member.email}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button onClick={exportToExcel}>
+                <Download className="mr-2 h-4 w-4" />
+                Export to Excel
+              </Button>
+              <Button onClick={exportToPDF}>
+                <Download className="mr-2 h-4 w-4" />
+                Export to PDF
+              </Button>
             </div>
           </CardContent>
         </Card>

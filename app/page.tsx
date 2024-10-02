@@ -7,7 +7,10 @@ import EventDashBoard  from './event-dashboard';
 import SettingsPage from './settings-page';
 import EventOverview from './event-overview';
 import RegistrationAnalytics from './registration-analytics';
+import EventProgramView from './event-program-view';
+import ParticipantDashboard from './participant-dashboard';
+import ProgramRegistration from './program-registration';
 
 export default function Home() {
-  return <SettingsPage />
+  return <ProgramRegistration />
 }
