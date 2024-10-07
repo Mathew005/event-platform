@@ -4,40 +4,45 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Calendar, MapPin, Clock, Filter, ChevronLeft, ChevronRight, User, LogOut, Settings, UserPlus, Menu, Plus } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar, MapPin, Clock, Filter, ChevronLeft, ChevronRight, User, LogOut, Settings, Search } from 'lucide-react'
+import { Badge } from "@/components/ui/badge"
 
-// Mock data for events
-const events = [
-  { id: 1, title: "Summer Music Festival", image: "/placeholder.svg?height=400&width=800", date: "2023-07-15", time: "14:00", location: "Central Park, NY", category: "Music" },
-  { id: 2, title: "Tech Conference 2023", image: "/placeholder.svg?height=400&width=800", date: "2023-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology" },
-  { id: 3, title: "Food & Wine Expo", image: "/placeholder.svg?height=400&width=800", date: "2023-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food" },
-  { id: 4, title: "Art Gallery Opening", image: "/placeholder.svg?height=400&width=800", date: "2023-10-05", time: "19:00", location: "Downtown Gallery, LA", category: "Art" },
-  { id: 5, title: "Marathon 2023", image: "/placeholder.svg?height=400&width=800", date: "2023-11-12", time: "07:00", location: "City Center, Boston", category: "Sports" },
+// Mock data for events and programs
+const eventsAndPrograms = [
+  { id: 1, type: 'event', title: "Summer Music Festival", image: "/placeholder.svg?height=400&width=800", date: "2023-07-15", time: "14:00", location: "Central Park, NY", category: "Music", institute: "NYC Music Institute" },
+  { id: 2, type: 'event', title: "Tech Conference 2023", image: "/placeholder.svg?height=400&width=800", date: "2023-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology", institute: "Tech Innovators Association" },
+  { id: 3, type: 'event', title: "Food & Wine Expo", image: "/placeholder.svg?height=400&width=800", date: "2023-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food", institute: "Culinary Arts Foundation" },
+  { id: 4, type: 'event', title: "Art Gallery Opening", image: "/placeholder.svg?height=400&width=800", date: "2023-10-05", time: "19:00", location: "Downtown Gallery, LA", category: "Art", institute: "LA Arts Council" },
+  { id: 5, type: 'event', title: "Marathon 2023", image: "/placeholder.svg?height=400&width=800", date: "2023-11-12", time: "07:00", location: "City Center, Boston", category: "Sports", institute: "Boston Athletics Association" },
+  { id: 6, type: 'program', title: "AI Workshop", image: "/placeholder.svg?height=400&width=800", date: "2023-08-23", time: "10:00", location: "Convention Center, SF", category: "Technology", event: "Tech Conference 2023" },
+  { id: 7, type: 'program', title: "Wine Tasting Session", image: "/placeholder.svg?height=400&width=800", date: "2023-09-11", time: "14:00", location: "Expo Hall, Chicago", category: "Food", event: "Food & Wine Expo" },
+  { id: 8, type: 'program', title: "Live Music Performance", image: "/placeholder.svg?height=400&width=800", date: "2023-07-16", time: "18:00", location: "Central Park, NY", category: "Music", event: "Summer Music Festival" },
 ]
 
 const categories = ['Music', 'Technology', 'Food', 'Sports', 'Art', 'Business', 'Health', 'Education']
+const districts = ['New York', 'San Francisco', 'Chicago', 'Los Angeles', 'Boston']
 
 export default function Component() {
-  const [activeTab, setActiveTab] = useState("all")
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedDistrict, setSelectedDistrict] = useState("all")
+  const [showType, setShowType] = useState("all")
+  const [selectedDate, setSelectedDate] = useState("")
   const carouselRef = useRef<HTMLDivElement>(null)
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % events.length)
+    setCurrentSlide((prev) => (prev + 1) % eventsAndPrograms.filter(item => item.type === 'event').length)
   }
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + events.length) % events.length)
-  } 
+    setCurrentSlide((prev) => (prev - 1 + eventsAndPrograms.filter(item => item.type === 'event').length) % eventsAndPrograms.filter(item => item.type === 'event').length)
+  }
 
   useEffect(() => {
     if (carouselRef.current) {
@@ -45,30 +50,30 @@ export default function Component() {
     }
   }, [currentSlide])
 
+  const filteredItems = eventsAndPrograms.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (item.institute && item.institute.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (item.event && item.event.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory
+    const matchesDistrict = selectedDistrict === "all" || item.location.includes(selectedDistrict)
+    const matchesType = showType === "all" || item.type === showType
+    const matchesDate = selectedDate === "" || item.date === selectedDate
+    return matchesSearch && matchesCategory && matchesDistrict && matchesType && matchesDate
+  })
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navbar */}
-      <nav className="bg-white shadow-md sticky top-0 z-10">
+      <nav className="bg-white shadow-md sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-2xl font-bold text-primary">CFC</Link>
             </div>
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
-              <Link href="#events" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Events
-              </Link>
-              <Link href="#categories" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Categories
-              </Link>
-              <Link href="#popular" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                Popular
-              </Link>
-            </div>
             <div className="flex items-center">
-              <Button variant="default" className="mr-2">
-                    Dashboard
-              </Button>
+              <Button variant="default" className="mr-2">Dashboard</Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -79,7 +84,7 @@ export default function Component() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="rounded-lg">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
@@ -89,7 +94,6 @@ export default function Component() {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -97,153 +101,177 @@ export default function Component() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                variant="ghost"
-                className="ml-2 md:hidden"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
             </div>
           </div>
         </div>
-        {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link href="#events" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                Events
-              </Link>
-              <Link href="#categories" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                Categories
-              </Link>
-              <Link href="#popular" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                Popular
-              </Link>
-            </div>
-          </div>
-        )}
       </nav>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Carousel */}
         <section className="mb-12 relative">
-          <h2 className="text-2xl font-bold mb-4">Featured Events</h2>
-          <div className="overflow-hidden rounded-lg">
-            <div 
-              ref={carouselRef}
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{ width: `${events.length * 100}%` }}
-            >
-              {events.map((event) => (
-                <div key={event.id} className="w-full flex-shrink-0 relative">
-                  <div 
-                    className="w-full h-[400px] bg-cover bg-center"
-                    style={{ backgroundImage: `url(${event.image})` }}
-                  >
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
-                      <div className="bg-primary text-primary-foreground px-2 py-1 rounded-md inline-block mb-2 w-fit">
-                        {event.category}
-                      </div>
-                      <h3 className="text-3xl font-bold text-white mb-2">{event.title}</h3>
-                      <div className="flex items-center text-white mb-1">
-                        <Clock className="w-4 h-4 mr-2" />
-                        <span>{event.time}</span>
-                      </div>
-                      <div className="flex items-center text-white">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span>{event.location}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+  <h2 className="text-2xl font-bold mb-4">Featured Events</h2>
+  <div className="overflow-hidden rounded-lg">
+    <div
+      ref={carouselRef}
+      className="flex transition-transform duration-300 ease-in-out"
+      style={{ width: `${eventsAndPrograms.filter(item => item.type === 'event').length * 100}%` }}
+    >
+      {eventsAndPrograms.filter(item => item.type === 'event').map((event) => (
+        <div key={event.id} className="w-full flex-shrink-0 relative">
+          <div
+            className="w-full h-[300px] sm:h-[400px] bg-cover bg-center"
+            style={{ backgroundImage: `url(${event.image})` }}
+          >
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-4 sm:p-6">
+              <div className="bg-primary text-primary-foreground px-2 py-1 rounded-md inline-block mb-1 sm:mb-2 w-fit text-xs sm:text-sm">
+                {event.category}
+              </div>
+              <h3 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-2">{event.title}</h3>
+              <div className="flex items-center text-white mb-1 text-xs sm:text-base">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                <span>{event.time}</span>
+              </div>
+              <div className="flex items-center text-white mb-1 text-xs sm:text-base">
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                <span>{event.location}</span>
+              </div>
+              <div className="flex items-center text-white text-xs sm:text-base">
+                <User className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                <span>{event.institute}</span>
+              </div>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            className="absolute left-4 top-1/2 transform -translate-y-1/2"
-            onClick={prevSlide}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-          <Button 
-            variant="outline" 
-            className="absolute right-4 top-1/2 transform -translate-y-1/2"
-            onClick={nextSlide}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </section>
+        </div>
+      ))}
+    </div>
+  </div>
+  <Button
+    variant="outline"
+    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+    onClick={prevSlide}
+    aria-label="Previous slide"
+  >
+    <ChevronLeft className="h-6 w-6" />
+  </Button>
+  <Button
+    variant="outline"
+    className="absolute right-4 top-1/2 transform -translate-y-1/2"
+    onClick={nextSlide}
+    aria-label="Next slide"
+  >
+    <ChevronRight className="h-6 w-6" />
+  </Button>
+</section>
 
-        {/* All Events with Filters */}
+
+        {/* Programs & Events with Filters */}
         <section id="events" className="mb-12">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">All Events</h2>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Date</h4>
-                    <Input type="date" id="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Venue</h4>
-                    <Select>
-                      <SelectTrigger id="venue">
-                        <SelectValue placeholder="Select a venue" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        <SelectItem value="central-park">Central Park, NY</SelectItem>
-                        <SelectItem value="convention-center">Convention Center, SF</SelectItem>
-                        <Select value="expo-hall">Expo Hall, Chicago</Select>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Event Type</h4>
-                    <Select>
-                      <SelectTrigger id="event-type">
-                        <SelectValue placeholder="Select an event type" />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button>Apply Filters</Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+          <div className="sticky top-16 bg-gray-100 z-10 py-4">
+            <div className="flex flex-wrap justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Programs & Events</h2>
+              <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                <Input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-auto"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline">
+                      <Filter className="w-4 h-4 mr-2" />
+                      Filter
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Category</h4>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category} value={category}>{category}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">District</h4>
+                        <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select district" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Districts</SelectItem>
+                            {districts.map((district) => (
+                              <SelectItem key={district} value={district}>{district}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Type</h4>
+                        <Select value={showType} onValueChange={setShowType}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Show type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="event">Events Only</SelectItem>
+                            <SelectItem value="program">Programs Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Date</h4>
+                        <Input
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <Card key={event.id}>
-                <CardHeader className="p-0">
-                  <img src={event.image} alt={event.title} className="w-full h-48 object-cover" />
+            {filteredItems.map((item) => (
+              <Card key={item.id}>
+                <CardHeader className="p-0 relative">
+                  <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Badge variant={item.type === 'event' ? 'default' : 'secondary'}>
+                      {item.type === 'event' ? 'Event' : 'Program'}
+                    </Badge>
+                    <Badge variant="outline">{item.category}</Badge>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <CardTitle className="text-xl mb-2">{event.title}</CardTitle>
+                  <CardTitle className="text-xl mb-2">{item.title}</CardTitle>
                   <CardDescription>
                     <div className="flex items-center mt-2">
                       <Calendar className="w-4 h-4 mr-2" />
-                      <span>{event.date}</span>
+                      <span>{item.date}</span>
                     </div>
                     <div className="flex items-center mt-1">
                       <Clock className="w-4 h-4 mr-2" />
-                      <span>{event.time}</span>
+                      <span>{item.time}</span>
                     </div>
                     <div className="flex items-center mt-1">
                       <MapPin className="w-4 h-4 mr-2" />
-                      <span>{event.location}</span>
+                      <span>{item.location}</span>
+                    </div>
+                    <div className="flex items-center mt-1">
+                      <User className="w-4 h-4 mr-2" />
+                      <span>{item.type === 'event' ? item.institute : item.event}</span>
                     </div>
                   </CardDescription>
                 </CardContent>
@@ -254,53 +282,6 @@ export default function Component() {
             ))}
           </div>
         </section>
-
-        {/* Categories and Popular Events */}
-        <Tabs defaultValue="categories" className="mb-12">
-          <TabsList>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="popular">Popular</TabsTrigger>
-          </TabsList>
-          <TabsContent value="categories">
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </TabsContent>
-          <TabsContent value="popular">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.slice(0, 3).map((event) => (
-                <Card key={event.id}>
-                  <CardHeader className="p-0">
-                    <img src={event.image} alt={event.title} className="w-full h-48 object-cover" />
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <CardTitle className="text-xl mb-2">{event.title}</CardTitle>
-                    <CardDescription>
-                      <div className="flex items-center mt-2">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span>{event.date}</span>
-                      </div>
-                      <div className="flex items-center mt-1">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span>{event.location}</span>
-                      </div>
-                    </CardDescription>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full">View Details</Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
       </main>
     </div>
   )
