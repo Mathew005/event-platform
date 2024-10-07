@@ -85,7 +85,9 @@ const specificEventHeaders = [
   { key: 'participants', label: 'No. of Participants' },
 ]
 
-export default function RegistrationAnalytics({ onClose }: { onClose: () => void }) {
+
+
+export default function RegistrationAnalytics() {
   const [selectedEvent, setSelectedEvent] = useState<number | 'all'>('all')
   const [visibleColumns, setVisibleColumns] = useState<string[]>(allEventsHeaders.map(h => h.key))
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null })
@@ -212,7 +214,6 @@ export default function RegistrationAnalytics({ onClose }: { onClose: () => void
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onClose}
                 className="text-muted-foreground"
               >
                 <X className="h-6 w-6" />

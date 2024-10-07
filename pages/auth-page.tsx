@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import axios from 'axios'
+import config from '@/config'
+
 
 const countryCodes = [
   { value: "+1", label: "USA (+1)" },
@@ -15,7 +18,7 @@ const countryCodes = [
   // Add more country codes as needed
 ]
 
-export default function AuthPage() {
+export default function Component() {
   const [isLogin, setIsLogin] = useState(true)
   const [userType, setUserType] = useState('participant')
   const [formKey, setFormKey] = useState(0)
@@ -34,31 +37,33 @@ export default function AuthPage() {
       setPasswordError("Passwords don't match")
       return
     }
-
+  
     setLoading(true)
     setErrorMessage('')
     setPasswordError('')
-
+  
     try {
-      const response = await fetch('https://localhost/cfc/auth.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${config.api.host}${config.api.routes.auth}`,
+        {
           action: isLogin ? 'login' : 'register',
           ...data,
-        }),
-      })
-
-      const result = await response.json()
-
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+  
+      const result = response.data
+  
       if (result.success) {
         alert(result.message)
-        // Optionally reset the form
         event.currentTarget.reset()
         setPassword('')
         setConfirmPassword('')
+        
       } else {
         setErrorMessage(result.message)
       }

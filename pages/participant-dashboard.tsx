@@ -438,7 +438,7 @@ function ProgramStatus({ date }: { date: string }) {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) {
-    return <Badge variant="success" className="bg-green-500 text-white">Today</Badge>
+    return <Badge className="bg-green-500 text-white">Today</Badge>
   } else if (diffDays > 0) {
     return <p className="text-xs text-gray-400">{diffDays} days left</p>
   } else {
