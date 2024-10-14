@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,20 +30,21 @@ export default function Component({ifLogin}:ifLogin) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const data = Object.fromEntries(formData)
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const data = Object.fromEntries(formData);
     
     if (!isLogin && password !== confirmPassword) {
-      setPasswordError("Passwords don't match")
-      return
+      setPasswordError("Passwords don't match");
+      return;
     }
   
-    setLoading(true)
-    setErrorMessage('')
-    setPasswordError('')
+    setLoading(true);
+    setErrorMessage('');
+    setPasswordError('');
   
     try {
       const response = await axios.post(
@@ -57,26 +58,27 @@ export default function Component({ifLogin}:ifLogin) {
             'Content-Type': 'application/json',
           },
         }
-      )
+      );
   
-      const result = response.data
+      const result = response.data;
   
       if (result.success) {
-        alert(result.message)
-        event.currentTarget.reset()
-        setPassword('')
-        setConfirmPassword('')
-        
+        alert(result.message);
+        if (formRef.current) {
+          formRef.current.reset();  // Reset the form using the ref
+        }
+        setPassword('');
+        setConfirmPassword('');
       } else {
-        setErrorMessage(result.message)
+        setErrorMessage(result.message);
       }
     } catch (error) {
-      console.error('Error:', error)
-      setErrorMessage('An error occurred. Please try again.')
+      console.error('Error:', error);
+      setErrorMessage('An error occurred. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     // Reset form when switching between login and register
@@ -105,7 +107,7 @@ export default function Component({ifLogin}:ifLogin) {
 
         {errorMessage && <div className="mb-4 text-red-500">{errorMessage}</div>}
 
-        <form key={formKey} onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} key={formKey} onSubmit={handleSubmit} className="space-y-4">
           {isLogin ? (
             <>
               <div className="space-y-2">
