@@ -10,6 +10,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import Link from 'next/link'
+import { useRouter } from 'next/navigation';
+import config from '@/config'
+
+const ImageFile = 'files/imgs/events/placeholder.svg'
 
 interface Program {
   id: string
@@ -40,7 +44,7 @@ interface Event {
 const programs: Program[] = [
   {
     id: '1',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     programName: 'AI Workshop',
     eventName: 'Tech Summit 2024',
     institute: 'Tech Institute',
@@ -57,7 +61,7 @@ const programs: Program[] = [
   },
   {
     id: '2',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     programName: 'Data Science Bootcamp',
     eventName: 'Data Analytics Conference',
     institute: 'Data Science Academy',
@@ -74,7 +78,7 @@ const programs: Program[] = [
   },
   {
     id: '3',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     programName: 'Cybersecurity Seminar',
     eventName: 'InfoSec World 2024',
     institute: 'Cyber Defense Institute',
@@ -91,7 +95,7 @@ const programs: Program[] = [
   },
   {
     id: '4',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     programName: 'Web Development Workshop',
     eventName: 'Frontend Masters Conference',
     institute: 'Code Academy',
@@ -108,7 +112,7 @@ const programs: Program[] = [
   },
   {
     id: '5',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     programName: 'Blockchain Fundamentals',
     eventName: 'Crypto Expo 2024',
     institute: 'Blockchain Institute',
@@ -128,42 +132,42 @@ const programs: Program[] = [
 const events: Event[] = [
   {
     id: '1',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     title: 'Tech Summit 2024',
     date: '2024-09-20',
     location: 'Tech Center'
   },
   {
     id: '2',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     title: 'Data Analytics Conference',
     date: '2024-09-25',
     location: 'Data Science Campus'
   },
   {
     id: '3',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     title: 'InfoSec World 2024',
     date: '2024-09-30',
     location: 'Virtual Event'
   },
   {
     id: '4',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     title: 'Frontend Masters Conference',
     date: '2024-10-05',
     location: 'Tech Hub'
   },
   {
     id: '5',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     title: 'Crypto Expo 2024',
     date: '2024-10-10',
     location: 'Innovation Center'
   },
   {
     id: '6',
-    image: '/placeholder.svg',
+    image: `${config.api.host}${ImageFile}`,
     title: 'AI and Ethics Symposium',
     date: '2024-09-15',
     location: 'University Auditorium'
@@ -174,6 +178,11 @@ export default function ParticipantDashboard() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
   const [bookmarkedPrograms, setBookmarkedPrograms] = useState<Set<string>>(new Set(programs.map(p => p.id)))
   const [bookmarkedEvents, setBookmarkedEvents] = useState<Set<string>>(new Set(events.map(e => e.id)))
+  const router = useRouter();
+
+  const onClose = () => {
+    router.push('/home');
+  };
 
   const sortedPrograms = useMemo(() => {
     const today = new Date('2024-10-02')
@@ -233,11 +242,11 @@ export default function ParticipantDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <header className="flex items-center justify-between p-6 border-b">
             <h1 className="text-2xl font-bold">Dashboard</h1>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-6 w-6" />
             </Button>
           </header>
@@ -293,7 +302,7 @@ export default function ParticipantDashboard() {
                 </TabsList>
 
                 <TabsContent value="programs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {programs.filter(program => bookmarkedPrograms.has(program.id)).map((program) => (
                       <BookmarkCard key={program.id} item={program} isEvent={false} onUnbookmark={() => toggleBookmark(program.id, false)} onViewDetails={() => openDialog(program)} />
                     ))}
@@ -301,7 +310,7 @@ export default function ParticipantDashboard() {
                 </TabsContent>
 
                 <TabsContent value="events">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {events.filter(event => bookmarkedEvents.has(event.id)).map((event) => (
                       <BookmarkCard key={event.id} item={event} isEvent={true} onUnbookmark={() => toggleBookmark(event.id, true)} onViewDetails={() => {}} />
                     ))}
@@ -320,7 +329,7 @@ export default function ParticipantDashboard() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently remove all expired bookmarks from your account.
+                          This action cannot be undone. This will permanently remove all expired event and program bookmarks from your account.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -438,7 +447,7 @@ function ProgramStatus({ date }: { date: string }) {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) {
-    return <Badge className="bg-green-500 text-white">Today</Badge>
+    return <Badge variant="success" className="bg-green-500 text-white">Today</Badge>
   } else if (diffDays > 0) {
     return <p className="text-xs text-gray-400">{diffDays} days left</p>
   } else {

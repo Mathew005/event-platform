@@ -2,7 +2,7 @@ import LandingPage from "@/pages/landing-page";
 
 export default function HomePage() {
     const userType = "organizer"; //participant, organizer 
-    const userName = "";
+    const userName = "Test";
 
-    return <LandingPage userType={userType} userName={userName} isLoggedIn={false}/>;
+    return <LandingPage userType={userType} userName={userName} isLoggedIn={true}/>;
 }

@@ -12,10 +12,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar, MapPin, Clock, Filter, ChevronLeft, ChevronRight, User, LogOut, Settings, Search } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from 'next/navigation'
-import config from '@/config'
 import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
 import { Calendar as DateCalendar } from "@/components/ui/calendar";
+import config from '@/config'
 
 const ImageFile = 'files/imgs/events/placeholder.svg'
 
@@ -41,6 +41,7 @@ interface UserDetails {
 }
 
 export default function Component({ userType, userName, isLoggedIn }: UserDetails = { userType: '', userName: '', isLoggedIn: false }) {
+  console.log(userName);
 
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0)
