@@ -80,7 +80,7 @@ const fetchPublishedEvents = async () => {
 
 const publishedEventsPromise = fetchPublishedEvents()
 
-export default function EventDashBoard() {
+export default function Component() {
   const publishedEvents = use(publishedEventsPromise)
   const [localPublishedEvents, setLocalPublishedEvents] = React.useState(publishedEvents)
 

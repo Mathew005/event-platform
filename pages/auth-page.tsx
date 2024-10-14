@@ -17,9 +17,12 @@ const countryCodes = [
   { value: "+91", label: "India (+91)" },
   // Add more country codes as needed
 ]
+interface ifLogin {
+  ifLogin: boolean;
+}
 
-export default function Component() {
-  const [isLogin, setIsLogin] = useState(true)
+export default function Component({ifLogin}:ifLogin) {
+  const [isLogin, setIsLogin] = useState(ifLogin)
   const [userType, setUserType] = useState('participant')
   const [formKey, setFormKey] = useState(0)
   const [loading, setLoading] = useState(false)

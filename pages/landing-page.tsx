@@ -11,38 +11,86 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar, MapPin, Clock, Filter, ChevronLeft, ChevronRight, User, LogOut, Settings, Search } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
+import { useRouter } from 'next/navigation'
+import config from '@/config'
+import { DateRange } from "react-day-picker";
+import { addDays, format } from "date-fns";
+import { Calendar as DateCalendar } from "@/components/ui/calendar";
+
+const ImageFile = 'files/imgs/events/placeholder.svg'
 
 // Mock data for events and programs
 const eventsAndPrograms = [
-  { id: 1, type: 'event', title: "Summer Music Festival", image: "/placeholder.svg?height=400&width=800", date: "2023-07-15", time: "14:00", location: "Central Park, NY", category: "Music", institute: "NYC Music Institute" },
-  { id: 2, type: 'event', title: "Tech Conference 2023", image: "/placeholder.svg?height=400&width=800", date: "2023-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology", institute: "Tech Innovators Association" },
-  { id: 3, type: 'event', title: "Food & Wine Expo", image: "/placeholder.svg?height=400&width=800", date: "2023-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food", institute: "Culinary Arts Foundation" },
-  { id: 4, type: 'event', title: "Art Gallery Opening", image: "/placeholder.svg?height=400&width=800", date: "2023-10-05", time: "19:00", location: "Downtown Gallery, LA", category: "Art", institute: "LA Arts Council" },
-  { id: 5, type: 'event', title: "Marathon 2023", image: "/placeholder.svg?height=400&width=800", date: "2023-11-12", time: "07:00", location: "City Center, Boston", category: "Sports", institute: "Boston Athletics Association" },
-  { id: 6, type: 'program', title: "AI Workshop", image: "/placeholder.svg?height=400&width=800", date: "2023-08-23", time: "10:00", location: "Convention Center, SF", category: "Technology", event: "Tech Conference 2023" },
-  { id: 7, type: 'program', title: "Wine Tasting Session", image: "/placeholder.svg?height=400&width=800", date: "2023-09-11", time: "14:00", location: "Expo Hall, Chicago", category: "Food", event: "Food & Wine Expo" },
-  { id: 8, type: 'program', title: "Live Music Performance", image: "/placeholder.svg?height=400&width=800", date: "2023-07-16", time: "18:00", location: "Central Park, NY", category: "Music", event: "Summer Music Festival" },
+  { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}`, date: "2024-07-15", time: "14:00", location: "Central Park, NY", category: "Music", institute: "NYC Music Institute" },
+  { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}`, date: "2024-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology", institute: "Tech Innovators Association" },
+  { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}`, date: "2024-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food", institute: "Culinary Arts Foundation" },
+  { id: 4, type: 'event', title: "Art Gallery Opening", image: `${config.api.host}${ImageFile}`, date: "2024-10-05", time: "19:00", location: "Downtown Gallery, LA", category: "Art", institute: "LA Arts Council" },
+  { id: 5, type: 'event', title: "Marathon 2024", image: `${config.api.host}${ImageFile}`, date: "2024-11-12", time: "07:00", location: "City Center, Boston", category: "Sports", institute: "Boston Athletics Association" },
+  { id: 6, type: 'program', title: "AI Workshop", image: `${config.api.host}${ImageFile}`, date: "2024-08-23", time: "10:00", location: "Convention Center, SF", category: "Technology", event: "Tech Conference 2024" },
+  { id: 7, type: 'program', title: "Wine Tasting Session", image: `${config.api.host}${ImageFile}`, date: "2024-09-11", time: "14:00", location: "Expo Hall, Chicago", category: "Food", event: "Food & Wine Expo" },
+  { id: 8, type: 'program', title: "Live Music Performance", image: `${config.api.host}${ImageFile}`, date: "2024-07-16", time: "18:00", location: "Central Park, NY", category: "Music", event: "Summer Music Festival" },
 ]
 
 const categories = ['Music', 'Technology', 'Food', 'Sports', 'Art', 'Business', 'Health', 'Education']
 const districts = ['New York', 'San Francisco', 'Chicago', 'Los Angeles', 'Boston']
 
-export default function Component() {
+interface UserDetails {
+  userType: string;
+  userName: string;
+  isLoggedIn: boolean;
+}
+
+export default function Component({ userType, userName, isLoggedIn }: UserDetails = { userType: '', userName: '', isLoggedIn: false }) {
+
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedDistrict, setSelectedDistrict] = useState("all")
   const [showType, setShowType] = useState("all")
-  const [selectedDate, setSelectedDate] = useState("")
   const carouselRef = useRef<HTMLDivElement>(null)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const slideIntervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store the interval
 
+  const handleDashboard = () => {
+      router.push(`/dashboard/${userType}`);
+  }
+
+  // Function to go to the next slide
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % eventsAndPrograms.filter(item => item.type === 'event').length)
-  }
+    setCurrentSlide((prev) => 
+      (prev + 1) % eventsAndPrograms.filter(item => item.type === 'event').length
+    );
+    resetTimer(8000); 
+  };
 
+  // Function to go to the previous slide
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + eventsAndPrograms.filter(item => item.type === 'event').length) % eventsAndPrograms.filter(item => item.type === 'event').length)
-  }
+    setCurrentSlide((prev) => 
+      (prev - 1 + eventsAndPrograms.filter(item => item.type === 'event').length) % 
+      eventsAndPrograms.filter(item => item.type === 'event').length
+    );
+    resetTimer(8000);
+  };
+
+  // Reset the interval and start a new one
+  const resetTimer = (timeout: number) => {
+    if (slideIntervalRef.current) {
+      clearInterval(slideIntervalRef.current); 
+    }
+    slideIntervalRef.current = setInterval(nextSlide, timeout); 
+  };
+
+  // Automatically move to the next slide every 5 seconds initially
+  useEffect(() => {
+    resetTimer(5000);
+
+    return () => {
+      if (slideIntervalRef.current) {
+        clearInterval(slideIntervalRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (carouselRef.current) {
@@ -50,6 +98,14 @@ export default function Component() {
     }
   }, [currentSlide])
 
+  const handleLogin = () => {
+    router.push('/auth/login');
+  }
+
+  const handleSignup = () => {
+    router.push('/auth/register')
+  }
+  
   const filteredItems = eventsAndPrograms.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,9 +115,10 @@ export default function Component() {
     const matchesCategory = selectedCategory === "all" || item.category === selectedCategory
     const matchesDistrict = selectedDistrict === "all" || item.location.includes(selectedDistrict)
     const matchesType = showType === "all" || item.type === showType
-    const matchesDate = selectedDate === "" || item.date === selectedDate
+    const matchesDate = !dateRange || (dateRange?.from && dateRange?.to &&  new Date(item.date) >= new Date(dateRange.from) &&   new Date(item.date) <= new Date(dateRange.to))
     return matchesSearch && matchesCategory && matchesDistrict && matchesType && matchesDate
   })
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -73,34 +130,44 @@ export default function Component() {
               <Link href="/" className="text-2xl font-bold text-primary">CFC</Link>
             </div>
             <div className="flex items-center">
-              <Button variant="default" className="mr-2">Dashboard</Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                    <span className="sr-only">Open user menu</span>
-                    <Avatar>
-                      <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="rounded-lg">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Edit Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {isLoggedIn ? (
+                <>
+                  <Button variant="default" className="mr-2" onClick={handleDashboard}>Dashboard</Button>
+                  {/* Profile Button */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        <span className="sr-only">Open user menu</span>
+                        <Avatar>
+                          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                          <AvatarFallback>CN</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-lg">
+                      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Edit Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" className="mr-2" onClick={handleLogin}>Login</Button>
+                  <Button variant="default" onClick={handleSignup}>Sign Up</Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -120,7 +187,7 @@ export default function Component() {
       {eventsAndPrograms.filter(item => item.type === 'event').map((event) => (
         <div key={event.id} className="w-full flex-shrink-0 relative">
           <div
-            className="w-full h-[300px] sm:h-[400px] bg-cover bg-center"
+            className="w-full h-[300px] sm:h-[400px]  bg-center"
             style={{ backgroundImage: `url(${event.image})` }}
           >
             <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-4 sm:p-6">
@@ -230,11 +297,48 @@ export default function Component() {
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-medium leading-none">Date</h4>
-                        <Input
-                          type="date"
-                          value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
-                        />
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start text-left font-normal"
+                                >
+                                    {dateRange?.from ? (
+                                        dateRange.to ? (
+                                            <>
+                                                {format(
+                                                    dateRange.from,
+                                                    "LLL dd, y"
+                                                )}{" "}
+                                                -{" "}
+                                                {format(
+                                                    dateRange.to,
+                                                    "LLL dd, y"
+                                                )}
+                                            </>
+                                        ) : (
+                                            format(dateRange.from, "LLL dd, y")
+                                        )
+                                    ) : (
+                                        <span>Pick a date range</span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                            >
+                                <DateCalendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={dateRange?.from}
+                                    selected={dateRange}
+                                    onSelect={setDateRange}
+                                    numberOfMonths={2}
+                                    disabled = {{ before: new Date()}}
+                                />
+                            </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                   </PopoverContent>
@@ -244,9 +348,9 @@ export default function Component() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <Card key={item.id}>
+              <Card key={item.id} >
                 <CardHeader className="p-0 relative">
-                  <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
+                  <img src={`${item.image}?height=400&width=800`} alt={item.title} className="w-full h-48 object-cover" />
                   <div className="absolute top-2 right-2 flex gap-2">
                     <Badge variant={item.type === 'event' ? 'default' : 'secondary'}>
                       {item.type === 'event' ? 'Event' : 'Program'}
@@ -256,8 +360,8 @@ export default function Component() {
                 </CardHeader>
                 <CardContent className="p-4">
                   <CardTitle className="text-xl mb-2">{item.title}</CardTitle>
-                  <CardDescription>
-                    <div className="flex items-center mt-2">
+                  <CardDescription suppressHydrationWarning={true}>
+                    <div className="flex items-center mt-2" >
                       <Calendar className="w-4 h-4 mr-2" />
                       <span>{item.date}</span>
                     </div>
