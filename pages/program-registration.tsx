@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast"
 
 // Mock data for the program
 const programData = {
-  isGroupEvent: true, // Toggle this to switch between group and solo event
+  isGroupEvent: false,
   programImage: "/placeholder.svg?height=300&width=400",
   programTitle: "AI & Machine Learning Hackathon",
   eventTitle: "TechFest 2023",
@@ -26,7 +26,6 @@ const countryCodes = [
   { value: "+91", label: "India (+91)" },
   { value: "+1", label: "USA (+1)" },
   { value: "+44", label: "UK (+44)" },
-  // Add more country codes as needed
 ]
 
 interface Member {
@@ -67,14 +66,35 @@ export default function ProgramRegistration() {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isFormValid()) {
-      console.log('Form submitted:', members)
-      toast({
-        title: "Registration Successful",
-        description: "Proceeding to payment...",
-      })
+      const options = {
+        key: 'rzp_test_74JvhBshSMhVVm',
+        amount: programData.fees * 100,
+        currency: 'INR',
+        name: programData.eventTitle,
+        description: programData.programTitle,
+        handler: function (response: any) {
+          console.log('Payment successful:', response)
+          toast({
+            title: "Registration Successful",
+            description: "Payment successful, thank you!",
+          })
+          // Further processing can be done here (e.g., storing registration in the database)
+        },
+        prefill: {
+          name: members[0].name,
+          email: members[0].email,
+          contact: members[0].contact,
+        },
+        theme: {
+          color: "#F37254",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } else {
       toast({
         title: "Invalid Form",
@@ -85,10 +105,19 @@ export default function ProgramRegistration() {
   }
 
   const fillFromProfile = () => {
-    // Mock function to fill data from profile
     const profileData = { name: 'John Doe', email: 'john@example.com', countryCode: '+91', contact: '1234567890' }
     setMembers([profileData, ...members.slice(1)])
   }
+
+  React.useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-gray-100 overflow-y-auto">
@@ -103,7 +132,7 @@ export default function ProgramRegistration() {
                 variant="outline"
                 size="icon"
                 className="text-muted-foreground"
-                onClick={()=>{}}
+                onClick={() => {}}
               >
                 <X className="h-6 w-6" />
                 <span className="sr-only">Close</span>
