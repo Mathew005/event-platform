@@ -16,6 +16,7 @@ import { DateRange } from "react-day-picker";
 import { addDays, format } from "date-fns";
 import { Calendar as DateCalendar } from "@/components/ui/calendar";
 import config from '@/config'
+import { useUserContext } from '@/components/contexts/UserContext'
 
 const ImageFile = 'files/imgs/events/placeholder.svg'
 
@@ -40,9 +41,16 @@ interface UserDetails {
   isLoggedIn: boolean;
 }
 
-export default function Component({ userType, userName, isLoggedIn }: UserDetails = { userType: '', userName: '', isLoggedIn: false }) {
-  console.log(userName);
+export default function Component(/*{ userType, userName, isLoggedIn }: UserDetails = { userType: '', userName: '', isLoggedIn: false }*/) {
+  
+  const { userId, setUserId, usertype, setUsertype} = useUserContext();
 
+  useEffect(() => {
+    setUserId('1')
+    setUsertype('organizer') // participant, organizer
+  }, []);
+
+  const isLoggedIn = userId !== undefined && userId !== '';
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
@@ -54,7 +62,7 @@ export default function Component({ userType, userName, isLoggedIn }: UserDetail
   const slideIntervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store the interval
 
   const handleDashboard = () => {
-      router.push(`/dashboard/${userType}`);
+      router.push(`/dashboard/${usertype}`);
   }
 
   // Function to go to the next slide
@@ -105,6 +113,13 @@ export default function Component({ userType, userName, isLoggedIn }: UserDetail
 
   const handleSignup = () => {
     router.push('/auth/register')
+  }
+
+  const x = {}
+
+  const handleCardClick = (item: any) => {
+    const id = item.id;
+    console.log(id)
   }
   
   const filteredItems = eventsAndPrograms.filter(item => {
@@ -349,7 +364,7 @@ export default function Component({ userType, userName, isLoggedIn }: UserDetail
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
-              <Card key={item.id} >
+              <Card key={item.id}>
                 <CardHeader className="p-0 relative">
                   <img src={`${item.image}?height=400&width=800`} alt={item.title} className="w-full h-48 object-cover" />
                   <div className="absolute top-2 right-2 flex gap-2">
@@ -381,7 +396,7 @@ export default function Component({ userType, userName, isLoggedIn }: UserDetail
                   </CardDescription>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full">View Details</Button>
+                  <Button className="w-full" onClick={() => {handleCardClick(item)}} >View Details</Button>
                 </CardFooter>
               </Card>
             ))}

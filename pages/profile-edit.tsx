@@ -84,12 +84,23 @@ const defaultAvatars = [
 ]
 
 const interestCategories = {
-  "Technology": ["Coding", "Web Design", "AI", "Cybersecurity", "Blockchain"],
-  "Cultural": ["Art", "Music", "Dance", "Literature", "Languages"],
-  "Commerce": ["Marketing", "Finance", "Entrepreneurship", "E-commerce"],
-  "Science": ["Physics", "Chemistry", "Biology", "Astronomy"],
-  "Sports": ["Football", "Basketball", "Tennis", "Swimming", "Yoga"],
-  "Lifestyle": ["Fashion", "Cooking", "Travel", "Photography", "Fitness"]
+  "Technology": ["Coding", "Web Design", "AI", "Cybersec", "Blockchain", "Data", "Cloud", "IoT", "AR/VR"],
+  "Culture": ["Art", "Music", "Dance", "Books", "Langs", "Film", "Theater", "Food Traditions", "Heritage"],
+  "Commerce": ["Marketing", "Finance", "Startups", "E-commerce", "Supply Chain", "Social Biz"],
+  "Science": ["Physics", "Chem", "Bio", "Space", "Enviro Science", "Psych", "Genetics", "Geology"],
+  "Sports": ["Soccer", "Basketball", "Tennis", "Swim", "Yoga", "Running", "Martial Arts", "Extreme Sports"],
+  "Lifestyle": ["Fashion", "Cooking", "Travel", "Photo", "Fitness", "Home Decor", "Gardening", "Mindfulness"],
+  "Health": ["Mental Health", "Nutrition", "Holistic", "Meditation", "Wellness", "Fitness Trends"],
+  "Environment": ["Renewables", "Conservation", "Urban Garden", "Eco Living", "Waste Reduction", "Sustainable Fashion"],
+  "Education": ["Workshops", "Lifelong Learning", "STEM", "Languages", "Online Courses", "Skills"],
+  "Social": ["Service", "Activism", "Nonprofit", "Social Justice", "Volunteering", "Civic Duty"],
+  "Gaming": ["Video Games", "Board Games", "Game Dev", "VR", "Streaming", "Game Design"],
+  "Food": ["Culinary", "Wine", "Food Trucks", "Global Cuisine", "Food Fests", "Sustainable Eating"],
+  "Travel": ["Adventure", "Cultural Exchange", "Travel Photo", "Eco Tourism", "Road Trips", "Backpacking"],
+  "Crafts": ["Handmade", "DIY", "Upcycling", "Markets", "Craft Fairs", "Sewing"],
+  "Film": ["Documentaries", "Filmmaking", "Animation", "Storytelling", "Film Fests", "Podcasting"],
+  "History": ["Heritage", "Reenactments", "Genealogy", "Local History", "Preservation", "Archaeology"],
+  "Themes": ["Innovation", "Cultures", "Future Work", "Digital Nomads", "Diversity", "Nature", "Art-Tech Fusion", "Tradition", "Mindfulness", "Local Talent"]
 }
 
 export default function Component() {
@@ -367,7 +378,7 @@ export default function Component() {
               <DialogTitle>Add Interests</DialogTitle>
             </DialogHeader>
             <Tabs defaultValue={Object.keys(interestCategories)[0]} className="w-full">
-              <TabsList className="h-20 grid grid-cols-3 grid-rows-2 gap-y-1 gap-4">
+              <TabsList className="h-50 grid grid-cols-3 grid-rows-2 gap-y-1 gap-4">
                 {Object.keys(interestCategories).map(category => (
                   <TabsTrigger key={category} value={category} className="text-xs sm:text-sm">
                     {category}

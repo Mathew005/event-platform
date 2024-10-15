@@ -7,6 +7,6 @@ import ProgramCreation from '@/pages/program-creation';
 import EventCreation from '@/pages/event-creation';
 import RegistrationAnalytics from '@/pages/registration-analytics';
 
-export default function HomePage() {
-    return <RegistrationAnalytics/>;
+export default function EventPage() {
+    return <ProfileEdit/>;
 }

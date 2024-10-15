@@ -89,7 +89,7 @@ export default function ProgramRegistration() {
           contact: members[0].contact,
         },
         theme: {
-          color: "#F37254",
+          color: "#ffffff",
         },
       };
 

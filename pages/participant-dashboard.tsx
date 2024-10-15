@@ -10,8 +10,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import Link from 'next/link'
+import { Toaster, toast } from 'sonner'
 import { useRouter } from 'next/navigation';
 import config from '@/config'
+
 
 const ImageFile = 'files/imgs/events/placeholder.svg'
 
@@ -201,6 +203,7 @@ export default function ParticipantDashboard() {
         }
         return newSet
       })
+      toast('Event Book Mark Removed');
     } else {
       setBookmarkedPrograms(prev => {
         const newSet = new Set(prev)
@@ -211,6 +214,7 @@ export default function ParticipantDashboard() {
         }
         return newSet
       })
+      toast('Program Book Mark Removed');
     }
   }
 
@@ -234,6 +238,7 @@ export default function ParticipantDashboard() {
       })
       return newSet
     })
+    toast.success('Expired events and programs were removed');
   }
 
   const openDialog = (program: Program) => {
@@ -242,7 +247,9 @@ export default function ParticipantDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
+      <Toaster richColors   />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Toaster richColors   />
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <header className="flex items-center justify-between p-6 border-b">
             <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -269,7 +276,7 @@ export default function ParticipantDashboard() {
                   <h2 className="text-xl font-semibold mb-4">Registered</h2>
                   <div className="space-y-4">
                     {sortedPrograms.filter(p => new Date(p.date) >= new Date('2024-10-02')).map((program) => (
-                      <ProgramCard key={program.id} program={program} onClick={() => openDialog(program)} />
+                      <ProgramCard key={program.id} program={program} openDialog={openDialog}  />
                     ))}
                   </div>
                 </section>
@@ -281,7 +288,7 @@ export default function ParticipantDashboard() {
                   </h2>
                   <div className="space-y-4">
                     {sortedPrograms.filter(p => new Date(p.date) < new Date('2024-10-02')).map((program) => (
-                      <ProgramCard key={program.id} program={program} onClick={() => openDialog(program)} />
+                      <ProgramCard key={program.id} program={program} openDialog={openDialog} />
                     ))}
                   </div>
                 </section>
@@ -383,9 +390,9 @@ export default function ParticipantDashboard() {
   )
 }
 
-function ProgramCard({ program, onClick }: { program: Program; onClick: () => void }) {
+function ProgramCard({ program, openDialog}: { program: Program; openDialog: (program: Program) => void}) {
   return (
-    <div className="bg-white rounded-lg shadow p-4 flex items-center space-x-4 cursor-pointer" onClick={onClick}>
+    <div className="bg-white rounded-lg shadow p-4 flex items-center space-x-4 cursor-pointer">
       <img src={program.image} alt={program.programName} className="w-16 h-16 object-cover rounded" />
       <div className="flex-1">
         <h3 className="font-semibold">{program.programName}</h3>
@@ -398,14 +405,17 @@ function ProgramCard({ program, onClick }: { program: Program; onClick: () => vo
       </div>
       <div className="text-right">
         <Link href={`/program/${program.id}`} passHref>
-          <Button variant="outline" size="sm" className="bg-black text-white hover:bg-gray-800">View</Button>
+          <Button variant="outline" size="sm" className="w-15 mr-2 md:w-24 bg-white text-black hover:bg-gray-200">View</Button>
         </Link>
+        <div className="mt-2">
+          <Button onClick={() => openDialog(program)} variant="outline" size="sm" className="w-14 mr-2 md:w-24 bg-black text-white hover:bg-gray-800">Details</Button>
+        </div>
         <div className="mt-2">
           <ProgramStatus date={program.date} />
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: Event | Program; isEvent: boolean; onUnbookmark: () => void; onViewDetails: () => void }) {
