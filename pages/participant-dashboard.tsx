@@ -255,7 +255,7 @@ export default function ParticipantDashboard() {
             <TabsList className="mb-4">
               <TabsTrigger value="programs" className="flex items-center">
                 <BookOpen className="h-4 w-4 mr-2" />
-                Programs
+                Registrations
               </TabsTrigger>
               <TabsTrigger value="bookmarks" className="flex items-center">
                 <Bookmark className="h-4 w-4 mr-2" />
