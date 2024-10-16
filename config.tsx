@@ -3,7 +3,10 @@ const config = {
       host: 'http://localhost/cfc/',
       routes: {
         auth: 'auth.php',
-        event_create: 'event_create.php'
+        event_create: 'event_create.php',
+        participant: 'participant.php',
+        organizer: 'organizer.php',
+        password: 'password.php'
       },
     },
     db: {

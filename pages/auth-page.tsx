@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import axios from 'axios'
 import config from '@/config'
+import { useUserContext } from '@/components/contexts/UserContext'
+import { useRouter } from 'next/navigation'
 
 
 const countryCodes = [
@@ -21,7 +23,11 @@ interface ifLogin {
   ifLogin: boolean;
 }
 
+const ImageFile = 'files/imgs/events/placeholder.svg'
+
 export default function Component({ifLogin}:ifLogin) {
+  const { userId, setUserId, username, setUsername, usertype, setUsertype} = useUserContext();
+
   const [isLogin, setIsLogin] = useState(ifLogin)
   const [userType, setUserType] = useState('participant')
   const [formKey, setFormKey] = useState(0)
@@ -31,6 +37,7 @@ export default function Component({ifLogin}:ifLogin) {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -59,17 +66,24 @@ export default function Component({ifLogin}:ifLogin) {
           },
         }
       );
-  
+      
       const result = response.data;
-  
+      
       if (result.success) {
-        alert(result.message);
+        const user = result.user;
+        setUserId(user.id)
+        setUsername(user.name)
+        setUsertype(user.userType)
+        router.push('/home')
+        // console.log(user)
+        // alert(result.message);
         if (formRef.current) {
-          formRef.current.reset();  // Reset the form using the ref
+          formRef.current.reset();
         }
         setPassword('');
         setConfirmPassword('');
       } else {
+        console.log(result.message)
         setErrorMessage(result.message);
       }
     } catch (error) {
@@ -89,7 +103,7 @@ export default function Component({ifLogin}:ifLogin) {
   }, [isLogin])
 
   return (
-    <div className="min-h-screen bg-cover bg-center flex items-center justify-center p-4" style={{backgroundImage: "url('/placeholder.svg?height=1080&width=1920')"}}>
+    <div className="min-h-screen bg-cover bg-center flex items-center justify-center p-4" style={{backgroundImage: `url('${config.api.host}${ImageFile}?height=1080&width=1920')`}}>
       <div className="absolute inset-0 backdrop-blur-sm"></div>
       <div className="bg-white/80 p-8 rounded-lg shadow-md w-full max-w-md relative z-10 transition-all duration-300 ease-in-out">
         <div className="flex justify-between items-center mb-6">

@@ -43,14 +43,14 @@ interface UserDetails {
 
 export default function Component(/*{ userType, userName, isLoggedIn }: UserDetails = { userType: '', userName: '', isLoggedIn: false }*/) {
   
-  const { userId, setUserId, usertype, setUsertype} = useUserContext();
+  const { userId, setUserId, username, setUsername, usertype, setUsertype} = useUserContext();
 
   useEffect(() => {
-    setUserId('1')
-    setUsertype('organizer') // participant, organizer
+    // setUserId('1')
+    // setUsertype('organizer') // participant, organizer
   }, []);
 
-  const isLoggedIn = userId !== undefined && userId !== '';
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
@@ -60,6 +60,10 @@ export default function Component(/*{ userType, userName, isLoggedIn }: UserDeta
   const carouselRef = useRef<HTMLDivElement>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const slideIntervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store the interval
+
+  useEffect(() => {
+    setIsLoggedIn(userId !== undefined && userId !== '');
+  }, [userId]);
 
   const handleDashboard = () => {
       router.push(`/dashboard/${usertype}`);
@@ -115,13 +119,29 @@ export default function Component(/*{ userType, userName, isLoggedIn }: UserDeta
     router.push('/auth/register')
   }
 
-  const x = {}
+  const handleProfile = () => {
+    router.push('/profile')
+  }
+  
+  const handleLogOut = () => {
+    setUserId('');
+    setUsername('');
+    setUsertype('');
+  };
 
   const handleCardClick = (item: any) => {
     const id = item.id;
     console.log(id)
   }
   
+  function getInitials(fullName: string): string {
+    const names = fullName.trim().split(' ');
+
+    const initials = names.map(name => name.charAt(0).toUpperCase()).join('');
+
+    return initials;
+}
+
   const filteredItems = eventsAndPrograms.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -156,13 +176,13 @@ export default function Component(/*{ userType, userName, isLoggedIn }: UserDeta
                         <span className="sr-only">Open user menu</span>
                         <Avatar>
                           <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                          <AvatarFallback>CN</AvatarFallback>
+                          <AvatarFallback>{getInitials(username)}</AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-lg">
                       <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleProfile}>
                         <User className="mr-2 h-4 w-4" />
                         <span>Edit Profile</span>
                       </DropdownMenuItem>
@@ -171,7 +191,7 @@ export default function Component(/*{ userType, userName, isLoggedIn }: UserDeta
                         <span>Settings</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                       </DropdownMenuItem>

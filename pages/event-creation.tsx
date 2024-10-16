@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation"
 import axios from "axios"
 import config from "@/config"
 import { toast, Toaster } from "sonner"
+import { useUserContext } from "@/components/contexts/UserContext"
 
 const availableFestTypes = [
   { "value": "technology", "label": "Technology" },
@@ -81,6 +82,7 @@ export default function Component() {
   const [googleMapsLink, setGoogleMapsLink] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const { userId, username} = useUserContext();
   const router = useRouter()
 
   const onClose = () => {
@@ -130,54 +132,65 @@ export default function Component() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
+    e.preventDefault();
+    setIsSubmitting(true);
+  
     if (!validateForm()) {
-      setIsSubmitting(false)
-      toast.error('Please fill in all required fields.')
-      return
+      setIsSubmitting(false);
+      toast.error("Please fill in all required fields.");
+      return;
     }
-
-    const eventData = {
-      eventName,
-      festTypes,
-      description,
-      isMultiDay,
-      fromDate,
-      toDate: toDate || fromDate,
-      location,
-      coordinators,
-      croppedImage,
-      googleMapsLink,
+  
+    // Create a FormData object to include the event data and image
+    const formData = new FormData();
+    formData.append("eventName", eventName);
+    formData.append("festTypes", festTypes.join(",")); // Assuming festTypes is an array
+    formData.append("description", description);
+    formData.append("isMultiDay", isMultiDay.toString());
+    formData.append("fromDate", fromDate.toISOString()); // Convert to ISO format
+    formData.append("toDate", (toDate || fromDate).toISOString());
+    formData.append("location", location);
+    formData.append("googleMapsLink", googleMapsLink);
+  
+    // Append coordinators data
+    coordinators.forEach((coordinator, index) => {
+      formData.append(`coordinators[${index}][name]`, coordinator.name);
+      formData.append(`coordinators[${index}][phone]`, coordinator.phone);
+      formData.append(`coordinators[${index}][email]`, coordinator.email);
+      formData.append(`coordinators[${index}][isFaculty]`, coordinator.isFaculty.toString());
+    });
+  
+    // Append the cropped image (converted to Blob)
+    if (croppedImage) {
+      const imageBlob = await fetch(croppedImage).then((res) => res.blob());
+      formData.append("eventImage", imageBlob, "event-image.jpg");
     }
-
-    console.log(eventData)
-
+    console.log(formData)
     try {
-    //   Simulating API call
-      const response = await axios.post(`${config.api.host}${config.api.routes.event_create}`, eventData, {
+      // Replace the simulation with actual API call
+      const response = await axios.post(`${config.api.host}${config.api.routes.event_create}`, formData, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "multipart/form-data",
         },
-      })
-      
-      toast.success('Event Created', {
+      });
+  
+      // Show success toast
+      toast.success("Event Created", {
         description: `${eventName} has been scheduled for ${
           isMultiDay
             ? `${format(fromDate!, "PP")} to ${format(toDate || fromDate!, "PP")}`
             : format(fromDate!, "PP")
         } at ${location}.`,
-      })
-
-      // Delay navigation to allow toast to be read
+      });
+  
+      // Delay navigation to allow the user to read the toast message
       setTimeout(() => {
-        router.push('/dashboard/organizer')
-      }, 5000)
+        router.push("/dashboard/organizer");
+      }, 5000);
     } catch (error) {
-      console.error('Error creating event:', error)
-      toast.error('Failed to create event. Please try again.')
-      setIsSubmitting(false)
+      console.error("Error creating event:", error);
+      toast.error("Failed to create event. Please try again.");
+      setIsSubmitting(false);
     }
   }
 
