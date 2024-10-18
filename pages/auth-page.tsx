@@ -17,7 +17,6 @@ const countryCodes = [
   { value: "+1", label: "USA (+1)" },
   { value: "+44", label: "UK (+44)" },
   { value: "+91", label: "India (+91)" },
-  // Add more country codes as needed
 ]
 interface ifLogin {
   ifLogin: boolean;
@@ -26,7 +25,7 @@ interface ifLogin {
 const ImageFile = 'files/imgs/events/placeholder.svg'
 
 export default function Component({ifLogin}:ifLogin) {
-  const { userId, setUserId, username, setUsername, usertype, setUsertype} = useUserContext();
+  const { setUserId, setUsername, setUsertype} = useUserContext();
 
   const [isLogin, setIsLogin] = useState(ifLogin)
   const [userType, setUserType] = useState('participant')
@@ -74,6 +73,7 @@ export default function Component({ifLogin}:ifLogin) {
         setUserId(user.id)
         setUsername(user.name)
         setUsertype(user.userType)
+        console.log('Logged In')
         router.push('/home')
         // console.log(user)
         // alert(result.message);

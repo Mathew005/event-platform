@@ -17,10 +17,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+
 import { cn } from "@/lib/utils"
 import { useUserContext } from "@/components/contexts/UserContext"
 import config from "@/config"
 import { useRouter } from "next/navigation"
+import {toast, Toaster } from "sonner"
+import axios from "axios"
 
 const districts = [
   { value: "thiruvananthapuram", label: "Thiruvananthapuram" },
@@ -70,103 +73,188 @@ const interestCategories = {
   "History": ["Heritage", "Reenactments", "Genealogy", "Local History", "Preservation", "Archaeology"],
   "Themes": ["Innovation", "Cultures", "Future Work", "Digital Nomads", "Diversity", "Nature", "Art-Tech Fusion", "Tradition", "Mindfulness", "Local Talent"]
 }
+const identifierColumns = {
+  participant: {
+    PID: 'PID',
+    PName: 'PName',
+    PEmail: 'PEmail',
+    PAvatar: 'PAvatar',
+    PCode: 'PCode',
+    PPhone: 'PPhone',
+    PLocation: 'PLocation',
+    PInstitute: 'PInstitute',
+    PCourse: 'PCourse',
+    PDepartment: 'PDepartment',
+    PInterests: 'PInterests'
+  },
+  organizer: {
+    OID: 'OID',
+    OName: 'OName',
+    OEmail: 'OEmail',
+    OAvatar: 'OAvatar',
+    OCode: 'OCode',
+    OPhone: 'OPhone',
+    OLocation: 'OLocation',
+    OInstitute: 'OInstitute',
+    OGPS: 'OGPS',
+    OWebsite: 'OWebsite',
+    OAddress: 'OAddress'
+  }
+}
+
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: {
+        table,
+        id,
+        columnIdentifier,
+        columnTargets: columnTargets.join(',')
+      }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+const saveData = async (
+  table: string,
+  identifier: string,
+  identifierColumn: string,
+  target: string,
+  data: any
+) => {
+  if (data === undefined || data === null) {
+    console.error(`Attempted to update ${target} with undefined or null value`)
+    return false
+  }
+
+  try {
+    const response = await axios.post(
+      `${config.api.host}${config.api.routes.save_fetch}`,
+      {
+        table,
+        identifier,
+        identifierColumn,
+        target,
+        data
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    const result = response.data
+
+    if (result.success) {
+      console.log(`Successfully updated ${target}`)
+      return true
+    } else {
+      console.error(`Failed to update ${target}: ${result.message}`)
+      return false
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    return false
+  }
+}
+
 
 export default function Component() {
   const {
     userId,
     username,
     usertype,
-    image,
-    email,
-    phone,
-    password,
-    website,
-    address,
-    course,
-    department,
-    institute,
-    location,
-    interests: userInterests,
-    gps,
     setUserId,
-    setUsername,
     setUsertype,
-    setImage,
-    setEmail,
-    setPhone,
-    setPassword,
-    setWebsite,
-    setAddress,
-    setCourse,
-    setDepartment,
-    setInstitute,
-    setLocation,
-    setInterests,
-    setGps,
     fetchUserData,
-    dumpUserData
+    dumpUserData,
   } = useUserContext()
 
   const [name, setName] = useState(username)
-  const [emailState, setEmailState] = useState(email)
-  const [avatar, setAvatar] = useState(image)
-  const [courseState, setCourseState] = useState(course || "")
-  const [departmentState, setDepartmentState] = useState(department || "")
-  const [instituteState, setInstituteState] = useState(institute)
-  const [interestsState, setInterestsState] = useState<string[]>(userInterests?.split(',') || [])
+  const [email, setEmail] = useState("")
+  const [avatar, setAvatar] = useState("")
+  const [course, setCourse] = useState("")
+  const [department, setDepartment] = useState("")
+  const [institute, setInstitute] = useState("")
+  const [interests, setInterests] = useState<string[]>([])
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [locationOpen, setLocationOpen] = useState(false)
-  const [locationState, setLocationState] = useState(location || "")
+  const [location, setLocation] = useState("")
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [isCropping, setIsCropping] = useState(false)
   const [tempImage, setTempImage] = useState("")
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
-  const [websiteState, setWebsiteState] = useState(website || "")
-  const [addressState, setAddressState] = useState(address || "")
+  const [website, setWebsite] = useState("")
+  const [address, setAddress] = useState("")
   const [passwordChangeMessage, setPasswordChangeMessage] = useState("")
   const [countryCode, setCountryCode] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [gpsState, setGpsState] = useState(gps || "")
+  const [gps, setGps] = useState("")
   const router = useRouter()
 
+  const [initialData, setInitialData] = useState<Record<string, any>>({})
+
   useEffect(() => {
-    setUserId('4')
+    setUserId('1')
     setUsertype('participant')
-  },[])
+  }, [])
 
   useEffect(() => {
-    if (userId) {
-      fetchUserData(userId, usertype as 'participant' | 'organizer')
-      setEmailState(email)
-      setAvatar(image)
-      setName(username)
-      if(usertype == 'participant'){
-      setCourseState(course|| "")
-      setDepartmentState(department || "")
-      setInstituteState(institute || "")
-      setLocationState(location || "")
-      setInterestsState(userInterests?.split(',') || [])
-      console.log(email)
-    }else if(usertype == 'organizer'){
-      
+    const fetchUserData = async () => {
+      if (userId) {
+        const table = usertype === 'participant' ? 'Participants' : 'Organizers'
+        const columns = identifierColumns[usertype as 'participant' | 'organizer']
+        const columnTargets = Object.values(columns)
+        const data = await fetchData(table, userId, columns.PID || columns.OID, columnTargets)
+        
+        if (data) {
+          setInitialData(data)
+          setName(data[columns.PName || columns.OName] || "")
+          setEmail(data[columns.PEmail || columns.OEmail] || "")
+          setAvatar(data[columns.PAvatar || columns.OAvatar] || "")
+          setCountryCode(data[columns.PCode || columns.OCode] || "")
+          setPhoneNumber(data[columns.PPhone || columns.OPhone] || "")
+          setLocation(data[columns.PLocation || columns.OLocation] || "")
+          setInstitute(data[columns.PInstitute || columns.OInstitute] || "")
+          
+          if (usertype === 'participant') {
+            setCourse(data[columns.PCourse] || "")
+            setDepartment(data[columns.PDepartment] || "")
+            setInterests(JSON.parse(data[columns.PInterests] || "[]"))
+          } else {
+            setGps(data[columns.OGPS] || "")
+            setWebsite(data[columns.OWebsite] || "")
+            setAddress(data[columns.OAddress] || "")
+          }
+        }
+      }
     }
-    }
-  }, [userId, usertype, fetchUserData])
+
+    fetchUserData()
+  }, [userId, usertype])
 
   useEffect(() => {
-    if (phone) {
-      const code = phone.substring(0, phone.indexOf(' '))
-      const number = phone.substring(phone.indexOf(' ') + 1)
-      setCountryCode(code)
-      setPhoneNumber(number)
-    }
-  }, [phone])
+    toast(passwordChangeMessage)
+  }, [passwordChangeMessage])
 
   const handleAvatarChange = (newAvatar: string) => {
     setAvatar(newAvatar)
+  }
+
+  const toggleInterest = (interest: string) => {
+    setInterests(prev =>
+      prev.includes(interest)
+        ? prev.filter(i => i !== interest)
+        : [...prev, interest]
+    )
   }
 
   const handleCustomAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,64 +275,89 @@ export default function Component() {
 
   const handleCropConfirm = useCallback(async () => {
     try {
-      const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels)
-      setAvatar(croppedImage)
-      setIsCropping(false)
-    } catch (e) {
-      console.error(e)
+      const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels);
+      setAvatar(croppedImage);
+      setIsCropping(false);
+    } catch (error) {
+      console.error("Error cropping image:", error);
     }
-  }, [tempImage, croppedAreaPixels])
+  }, [tempImage, croppedAreaPixels]);
 
   const handlePasswordChange = () => {
     if (newPassword !== confirmPassword) {
-      setPasswordChangeMessage("New password and confirm password do not match.")
-      return
+      setPasswordChangeMessage("New password and confirm password do not match.");
+      return;
     }
-    
-    setPassword(newPassword)
-    console.log("Password changed successfully")
-    setPasswordChangeMessage("Password changed successfully!")
-    setIsPasswordDialogOpen(false)
-    setNewPassword("")
-    setConfirmPassword("")
-  }
-
-  const toggleInterest = (interest: string) => {
-    setInterestsState(prev =>
-      prev.includes(interest)
-        ? prev.filter(i => i !== interest)
-        : [...prev, interest]
-    )
-  }
+  
+    saveData(usertype === "organizer" ? "Organizers": "Participants", 
+      userId, 
+      usertype === "organizer" ? "OID": "PID", 
+      usertype === "organizer" ? "OPassword": "PPassword", newPassword)
+      .then(() => {
+        setPasswordChangeMessage("Password changed successfully!");
+        setIsPasswordDialogOpen(false);
+      })
+      .catch((error) => {
+        console.error("Failed to change password:", error);
+        setPasswordChangeMessage("Failed to change password. Please try again.");
+      });
+  };
 
   const onClose = () => {
     router.push('/home')
   }
 
-  const handleSaveChanges = async () => {
-    setUsername(name)
-    setEmail(emailState)
-    setImage(avatar)
-    setCourse(courseState)
-    setDepartment(departmentState)
-    setInstitute(instituteState)
-    setInterests(interestsState.join(','))
-    setLocation(locationState)
-    setWebsite(websiteState)
-    setAddress(addressState)
-    setPhone(`${countryCode} ${phoneNumber}`)
-    setGps(gpsState)
-    
-    const success = await dumpUserData(usertype as 'participant' | 'organizer')
-    if (success) {
-      console.log("Changes saved successfully")
+  const handleSaveChanges = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const table = usertype === "participant" ? "Participants" : "Organizers"
+    const columns = identifierColumns[usertype as 'participant' | 'organizer']
+
+    const updatePromises = []
+
+    const updateIfChanged = (value: any, column: string) => {
+      if (value !== initialData[column]) {
+        updatePromises.push(saveData(table, userId, columns.PID || columns.OID, column, value))
+      }
+    }
+
+    updateIfChanged(name, columns.PName || columns.OName)
+    updateIfChanged(email, columns.PEmail || columns.OEmail)
+    updateIfChanged(avatar, columns.PAvatar || columns.OAvatar)
+    updateIfChanged(countryCode, columns.PCode || columns.OCode)
+    updateIfChanged(phoneNumber, columns.PPhone || columns.OPhone)
+    updateIfChanged(location, columns.PLocation || columns.OLocation)
+    updateIfChanged(institute, columns.PInstitute || columns.OInstitute)
+
+    if (usertype === "participant") {
+      updateIfChanged(course, columns.PCourse)
+      updateIfChanged(department, columns.PDepartment)
+      updateIfChanged(JSON.stringify(interests), columns.PInterests)
     } else {
-      console.error("Failed to save changes")
+      updateIfChanged(gps, columns.OGPS)
+      updateIfChanged(website, columns.OWebsite)
+      updateIfChanged(address, columns.OAddress)
+    }
+
+    try {
+      const results = await Promise.all(updatePromises)
+      if (results.every(result => result)) {
+        toast.success("Profile updated successfully!")
+      } else {
+        toast.error("Some profile updates failed. Please try again.")
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast.error("Failed to update profile. Please try again.")
     }
   }
 
+
+
+  
+
   return (
     <div className="min-h-screen bg-gray-100 py-4">
+      <Toaster richColors/>
       <div className="max-w-[1400px] mx-auto px-2 sm:px-4">
         <div className="bg-white shadow rounded-lg p-4 md:p-6">
           <div className="flex justify-between items-center mb-6">
@@ -261,7 +374,7 @@ export default function Component() {
               <div className="flex flex-wrap items-center gap-4 mt-2">
                 <Avatar className="w-20 h-20 md:w-24 md:h-24">
                   <AvatarImage src={`${config.api.host}${avatar}`} alt="Profile picture" />
-                  <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback>{name ? name.charAt(0) : "?"}</AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
                   <div className="flex flex-wrap gap-2">
@@ -326,8 +439,8 @@ export default function Component() {
                 <Input
                   id="email"
                   type="email"
-                  value={emailState}
-                  onChange={(e) => setEmailState(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -361,16 +474,16 @@ export default function Component() {
                     <Label htmlFor="course">Current Course</Label>
                     <Input
                       id="course"
-                      value={courseState}
-                      onChange={(e) => setCourseState(e.target.value)}
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
                     />
                   </div>
                   <div>
                     <Label htmlFor="department">Department</Label>
                     <Input
                       id="department"
-                      value={departmentState}
-                      onChange={(e) => setDepartmentState(e.target.value)}
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
                     />
                   </div>
                 </>
@@ -381,24 +494,24 @@ export default function Component() {
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"
-                      value={websiteState}
-                      onChange={(e) => setWebsiteState(e.target.value)}
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
                     />
                   </div>
                   <div>
                     <Label htmlFor="address">Address</Label>
                     <Input
                       id="address"
-                      value={addressState}
-                      onChange={(e) => setAddressState(e.target.value)}
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                     />
                   </div>
                   <div>
                     <Label htmlFor="gps">GPS Link</Label>
                     <Input
                       id="gps"
-                      value={gpsState}
-                      onChange={(e) => setGpsState(e.target.value)}
+                      value={gps}
+                      onChange={(e) => setGps(e.target.value)}
                     />
                   </div>
                 </>
@@ -407,8 +520,8 @@ export default function Component() {
                 <Label htmlFor="institute">Institute</Label>
                 <Input
                   id="institute"
-                  value={instituteState}
-                  onChange={(e) => setInstituteState(e.target.value)}
+                  value={institute}
+                  onChange={(e) => setInstitute(e.target.value)}
                 />
               </div>
               <div>
@@ -421,8 +534,8 @@ export default function Component() {
                       aria-expanded={locationOpen}
                       className="w-full justify-between"
                     >
-                      {locationState
-                        ? districts.find((district) => district.value === locationState)?.label
+                      {location
+                        ? districts.find((district) => district.value === location)?.label
                         : "Select district..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -438,14 +551,14 @@ export default function Component() {
                               key={district.value}
                               value={district.value}
                               onSelect={(currentValue) => {
-                                setLocationState(currentValue === locationState ? "" : currentValue)
+                                setLocation(currentValue === location ? "" : currentValue)
                                 setLocationOpen(false)
                               }}
                             >
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
-                                  locationState === district.value ? "opacity-100" : "opacity-0"
+                                  location === district.value ? "opacity-100" : "opacity-0"
                                 )}
                               />
                               {district.label}
@@ -462,7 +575,7 @@ export default function Component() {
             <div className="md:col-span-2 lg:col-span-3">
               <Label>Interests</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {interestsState.map(interest => (
+                {interests.map(interest => (
                   <Badge key={interest} variant="secondary">
                     {interest}
                     <Button
@@ -501,7 +614,7 @@ export default function Component() {
                             {categoryInterests.map(interest => (
                               <Button
                                 key={interest}
-                                variant={interestsState.includes(interest) ? "secondary" : "outline"}
+                                variant={interests.includes(interest) ? "secondary" : "outline"}
                                 size="sm"
                                 onClick={() => toggleInterest(interest)}
                                 className="justify-start"

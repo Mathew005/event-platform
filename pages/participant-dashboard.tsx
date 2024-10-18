@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import config from '@/config'
 
 
-const ImageFile = 'files/imgs/events/placeholder.svg'
+const ImageFile = 'files/imgs/defaults/events/'
 
 interface Program {
   id: string
@@ -46,7 +46,7 @@ interface Event {
 const programs: Program[] = [
   {
     id: '1',
-    image: `${config.api.host}${ImageFile}`,
+    image: `${config.api.host}${ImageFile}ai.jpg`,
     programName: 'AI Workshop',
     eventName: 'Tech Summit 2024',
     institute: 'Tech Institute',
@@ -63,7 +63,7 @@ const programs: Program[] = [
   },
   {
     id: '2',
-    image: `${config.api.host}${ImageFile}`,
+    image: `${config.api.host}${ImageFile}coding.jpg`,
     programName: 'Data Science Bootcamp',
     eventName: 'Data Analytics Conference',
     institute: 'Data Science Academy',
@@ -80,7 +80,7 @@ const programs: Program[] = [
   },
   {
     id: '3',
-    image: `${config.api.host}${ImageFile}`,
+    image: `${config.api.host}${ImageFile}semi.png`,
     programName: 'Cybersecurity Seminar',
     eventName: 'InfoSec World 2024',
     institute: 'Cyber Defense Institute',
@@ -97,7 +97,7 @@ const programs: Program[] = [
   },
   {
     id: '4',
-    image: `${config.api.host}${ImageFile}`,
+    image: `${config.api.host}${ImageFile}web designning.jpeg`,
     programName: 'Web Development Workshop',
     eventName: 'Frontend Masters Conference',
     institute: 'Code Academy',
@@ -114,7 +114,7 @@ const programs: Program[] = [
   },
   {
     id: '5',
-    image: `${config.api.host}${ImageFile}`,
+    image: `${config.api.host}${ImageFile}blockchain.jpeg`,
     programName: 'Blockchain Fundamentals',
     eventName: 'Crypto Expo 2024',
     institute: 'Blockchain Institute',

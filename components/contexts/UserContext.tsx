@@ -1,5 +1,4 @@
-"use client";
-// UserContext.tsx
+"use client"
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import axios from 'axios';
@@ -10,35 +9,13 @@ interface UserContextType {
   userId: string;
   username: string;
   usertype: string;
-  image: string;
-  email: string;
-  phone: string;
-  password: string;
-  website?: string;
-  address?: string;
-  course?: string;
-  department?: string;
-  institute: string;
-  location?: string;
-  interests?: string;
-  gps?: string;
   setUserId: (id: string) => void;
   setUsername: (name: string) => void;
   setUsertype: (type: string) => void;
-  setImage: (image: string) => void;
-  setEmail: (email: string) => void;
-  setPhone: (phone: string) => void;
-  setPassword: (password: string) => void;
-  setWebsite: (website?: string) => void;
-  setAddress: (address?: string) => void;
-  setCourse: (course?: string) => void;
-  setDepartment: (department?: string) => void;
-  setInstitute: (institute: string) => void;
-  setLocation: (location?: string) => void;
-  setInterests: (interests?: string) => void;
-  setGps: (gps?: string) => void;
   fetchUserData: (id: string, userType: 'participant' | 'organizer') => Promise<void>;
   dumpUserData: (userType: 'participant' | 'organizer') => Promise<boolean>;
+  saveData: (table: string, id: string, columnIdentifier: string, columnTarget: string, data: any) => Promise<boolean>;
+  fetchData: (table: string, id: string, columnIdentifier: string, columnTargets?: string[]) => Promise<any>;
 }
 
 // Create the context
@@ -50,49 +27,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [username, setUsername] = useState<string>('');
   const [usertype, setUsertype] = useState<string>('');
 
-  // User data state
-  const [image, setImage] = useState<string>('files/imgs/defaults/avatar1.jpg');
-  const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [website, setWebsite] = useState<string>();
-  const [address, setAddress] = useState<string>();
-  const [course, setCourse] = useState<string>();
-  const [department, setDepartment] = useState<string>();
-  const [institute, setInstitute] = useState<string>('');
-  const [location, setLocation] = useState<string>();
-  const [interests, setInterests] = useState<string>();
-  const [gps, setGps] = useState<string>();
-
   const fetchUserData = async (id: string, userType: 'participant' | 'organizer') => {
     try {
       const response = await axios.get(`${config.api.host}${config.api.routes[userType]}?id=${id}`);
       const data = response.data;
-
+  
       if (userType === 'organizer') {
         setUsername(data.OrganizerName);
-        setImage(data.OrganizerImage || image);
-        setEmail(data.OrganizerEmail);
-        setPhone(data.OrganizerPhone);
-        setPassword(data.OrganizerPassword || '');
-        setWebsite(data.OrganizerWebsite);
-        setAddress(data.OrganizerAddress);
-        setInstitute(data.OrganizerInstitute);
-        setLocation(data.OrganizerGPS);
       } else {
         setUsername(data.ParticipantName);
-        setImage(data.ParticipantImage || image);
-        setEmail(data.ParticipantEmail);
-        setPhone(data.ParticipantPhone);
-        setPassword(data.ParticipantPassword || '');
-        setCourse(data.ParticipantCourse);
-        setDepartment(data.ParticipantDepartment);
-        setInstitute(data.ParticipantInstitute);
-        setLocation(data.ParticipantLocation);
-        setInterests(data.ParticipantInterests);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error(`Error fetching ${userType} data:`, error);
+      throw new Error('Failed to fetch user data');
     }
   };
 
@@ -101,24 +48,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const payload = userType === 'organizer' ? {
         OrganizerID: userId,
         OrganizerName: username,
-        OrganizerEmail: email,
-        OrganizerPhone: phone,
-        OrganizerPassword: password,
-        OrganizerWebsite: website,
-        OrganizerAddress: address,
-        OrganizerInstitute: institute,
-        OrganizerGPS: gps,
       } : {
         ParticipantID: userId,
         ParticipantName: username,
-        ParticipantEmail: email,
-        ParticipantPhone: phone,
-        ParticipantPassword: password,
-        ParticipantCourse: course,
-        ParticipantDepartment: department,
-        ParticipantInstitute: institute,
-        ParticipantLocation: location,
-        ParticipantInterests: interests,
       };
 
       const response = await axios.post(`${config.api.host}${config.api.routes[userType]}`, payload);
@@ -129,41 +61,59 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Function to save data to a specific table and column
+  const saveData = async (table: string, id: string, columnIdentifier: string, columnTarget: string, data: any): Promise<boolean> => {
+    try {
+      const payload = {
+        table,
+        id,
+        columnIdentifier,
+        columnTarget,
+        data,
+      };
+      const response = await axios.post(`${config.api.host}${config.api.routes.save_fetch}`, payload);
+      return response.data.success;
+    } catch (error) {
+      console.error('Error saving data:', error);
+      return false;
+    }
+  };
+
+  // Modified function to fetch data from specific table and multiple columns
+  const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets?: string[]): Promise<any> => {
+    try {
+      const params: any = {
+        table,
+        id,
+        columnIdentifier,
+      };
+
+      // Only add columnTargets if it is provided
+      if (columnTargets && columnTargets.length > 0) {
+        params.columnTargets = columnTargets.join(','); // Send columns as a comma-separated string
+      }
+
+      const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, { params });
+      return response.data || null; // Expect the result as an object containing the requested columns
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return null;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
         userId,
         username,
         usertype,
-        image,
-        email,
-        phone,
-        password,
-        website,
-        address,
-        course,
-        department,
-        institute,
-        location,
-        interests,
-        gps,
         setUserId,
         setUsername,
         setUsertype,
-        setImage,
-        setEmail,
-        setPhone,
-        setPassword,
-        setWebsite,
-        setAddress,
-        setCourse,
-        setDepartment,
-        setInstitute,
-        setLocation,
-        setInterests,
-        setGps,
         fetchUserData,
         dumpUserData,
+        saveData,
+        fetchData,
       }}
     >
       {children}

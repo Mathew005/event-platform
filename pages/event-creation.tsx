@@ -65,21 +65,18 @@ export default function Component() {
   const [festTypes, setFestTypes] = useState<string[]>([])
   const [description, setDescription] = useState("")
   const [isMultiDay, setIsMultiDay] = useState(false)
-  const [fromDate, setFromDate] = useState<Date>()
-  const [toDate, setToDate] = useState<Date>()
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [locationOpen, setLocationOpen] = useState(false)
-  const [location, setLocation] = useState("")
-  const [coordinators, setCoordinators] = useState([
-    { name: "", phone: "", email: "", isFaculty: false },
-  ])
+  const [location, setLocation] = useState("");
+  const [coordinators, setCoordinators] = useState([{ name: "", phone: "", email: "", isFaculty: false }]);
   const [tempImage, setTempImage] = useState<string>("")
   const [croppedImage, setCroppedImage] = useState<string>("")
   const [isCropping, setIsCropping] = useState(false)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
-  const [googleMapsLink, setGoogleMapsLink] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
   const { userId, username} = useUserContext();
@@ -125,7 +122,6 @@ export default function Component() {
     if (!isMultiDay && !fromDate) newErrors.date = true
     if (!location) newErrors.location = true
     if (!coordinators[0]?.name) newErrors.coordinators = true
-    if (!googleMapsLink) newErrors.googleMapsLink = true
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -150,7 +146,6 @@ export default function Component() {
     formData.append("fromDate", fromDate.toISOString()); // Convert to ISO format
     formData.append("toDate", (toDate || fromDate).toISOString());
     formData.append("location", location);
-    formData.append("googleMapsLink", googleMapsLink);
   
     // Append coordinators data
     coordinators.forEach((coordinator, index) => {
@@ -259,17 +254,6 @@ export default function Component() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="googleMapsLink" className={errors.googleMapsLink ? "text-red-500" : ""}>Google Maps Link</Label>
-                <Input 
-                  id="googleMapsLink" 
-                  type="url" 
-                  value={googleMapsLink} 
-                  onChange={(e) => setGoogleMapsLink(e.target.value)} 
-                  placeholder="Enter Google Maps link" 
-                  className={errors.googleMapsLink ? "border-red-500" : ""}
-                />
-              </div>
 
               <div>
                 <Label htmlFor="eventImage" className={errors.eventImage ? "text-red-500" : ""}>Event Image</Label>

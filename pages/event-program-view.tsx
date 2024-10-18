@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { X, MapPin, ExternalLink, Download, Phone, Mail, Bookmark } from 'lucide-react'
 import Link from 'next/link'
+import config from '@/config'
 
 interface Coordinator {
   name: string
@@ -40,6 +41,9 @@ interface Event {
   programs: Program[]
 }
 
+
+const ImageFile = 'files/imgs/defaults/events/'
+
 const event: Event = {
   name: "TechFest 2023",
   institution: "Global Tech University",
@@ -52,7 +56,7 @@ const event: Event = {
     { name: "Dr. Emily Chen", email: "emily.chen@globaltech.edu", phone: "+1 (555) 123-4567", isFaculty: true },
     { name: "Mark Johnson", email: "mark.johnson@globaltech.edu", phone: "+1 (555) 987-6543", isFaculty: false }
   ],
-  image: "/placeholder.svg?height=400&width=800",
+  image: `${config.api.host}${ImageFile}tech_confernce.jpg?height=400&width=800`,
   programs: [
     {
       id: "1",
@@ -60,7 +64,7 @@ const event: Event = {
       category: "Competition",
       date: "September 15-16, 2023",
       time: "9:00 AM - 9:00 PM",
-      image: "/placeholder.svg?height=300&width=400",
+      image: `${config.api.host}${ImageFile}ai.jpg?height=300&width=400`,
       rules: "Form teams of 2-4 members. Develop an AI solution for a real-world problem within 36 hours. All code must be original and created during the event.",
       regFees: 100,
       isTeamEvent: true,

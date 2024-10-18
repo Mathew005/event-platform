@@ -10,7 +10,7 @@ import { X, ArrowLeft, Eye, History, Calendar, MapPin, Plus, BarChart2 } from 'l
 import { useRouter } from 'next/navigation'
 import config from '@/config'
 
-const ImageFile = 'files/imgs/events/placeholder.svg'
+const ImageFile = 'files/imgs/defaults/events/'
 
 type Event = {
   id: string
@@ -31,7 +31,7 @@ const events: Event[] = [
     location: 'San Francisco Convention Center, CA',
     status: 'scheduled',
     view: 'published',
-    image: `${config.api.host}${ImageFile}?height=200&width=200`,
+    image: `${config.api.host}${ImageFile}tech_confernce.jpg?height=200&width=200`,
     description: 'Annual tech conference featuring the latest in AI and machine learning.'
   },
   {
@@ -41,7 +41,7 @@ const events: Event[] = [
     location: 'Ritz-Carlton, New York, NY',
     status: 'commencing',
     view: 'published',
-    image: `${config.api.host}${ImageFile}?height=200&width=200`,
+    image: `${config.api.host}${ImageFile}charoty.jpg?height=200&width=200`,
     description: 'Elegant evening supporting local charities with dinner and silent auction.'
   },
   {
@@ -51,7 +51,7 @@ const events: Event[] = [
     location: 'Griffith Park, Los Angeles, CA',
     status: 'concluded',
     view: 'published',
-    image: `${config.api.host}${ImageFile}?height=200&width=200`,
+    image: `${config.api.host}${ImageFile}sumer.jpg?height=200&width=200`,
     description: 'Three-day outdoor music festival featuring top artists across multiple genres.'
   },
   {
@@ -61,7 +61,7 @@ const events: Event[] = [
     location: 'MIT Campus, Boston, MA',
     status: 'scheduled',
     view: 'staged',
-    image: `${config.api.host}${ImageFile}?height=200&width=200`,
+    image: `${config.api.host}${ImageFile}ai.jpg?height=200&width=200`,
     description: 'Hands-on workshop exploring practical applications of artificial intelligence.'
   },
   {

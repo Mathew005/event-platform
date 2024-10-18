@@ -18,13 +18,13 @@ import { Calendar as DateCalendar } from "@/components/ui/calendar";
 import config from '@/config'
 import { useUserContext } from '@/components/contexts/UserContext'
 
-const ImageFile = 'files/imgs/events/placeholder.svg'
+const ImageFile = 'files/imgs/defaults/events/'
 
 // Mock data for events and programs
 const eventsAndPrograms = [
-  { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}`, date: "2024-07-15", time: "14:00", location: "Central Park, NY", category: "Music", institute: "NYC Music Institute" },
-  { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}`, date: "2024-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology", institute: "Tech Innovators Association" },
-  { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}`, date: "2024-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food", institute: "Culinary Arts Foundation" },
+  { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-15", time: "14:00", location: "Central Park, NY", category: "Music", institute: "NYC Music Institute" },
+  { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}tech_confernce.jpg`, date: "2024-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology", institute: "Tech Innovators Association" },
+  { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}wine_tasting.jpg`, date: "2024-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food", institute: "Culinary Arts Foundation" },
   { id: 4, type: 'event', title: "Art Gallery Opening", image: `${config.api.host}${ImageFile}`, date: "2024-10-05", time: "19:00", location: "Downtown Gallery, LA", category: "Art", institute: "LA Arts Council" },
   { id: 5, type: 'event', title: "Marathon 2024", image: `${config.api.host}${ImageFile}`, date: "2024-11-12", time: "07:00", location: "City Center, Boston", category: "Sports", institute: "Boston Athletics Association" },
   { id: 6, type: 'program', title: "AI Workshop", image: `${config.api.host}${ImageFile}`, date: "2024-08-23", time: "10:00", location: "Convention Center, SF", category: "Technology", event: "Tech Conference 2024" },
@@ -35,33 +35,31 @@ const eventsAndPrograms = [
 const categories = ['Music', 'Technology', 'Food', 'Sports', 'Art', 'Business', 'Health', 'Education']
 const districts = ['New York', 'San Francisco', 'Chicago', 'Los Angeles', 'Boston']
 
-interface UserDetails {
-  userType: string;
-  userName: string;
-  isLoggedIn: boolean;
-}
-
-export default function Component(/*{ userType, userName, isLoggedIn }: UserDetails = { userType: '', userName: '', isLoggedIn: false }*/) {
+export default function Component() {
   
-  const { userId, setUserId, username, setUsername, usertype, setUsertype} = useUserContext();
-
-  useEffect(() => {
-    // setUserId('1')
-    // setUsertype('organizer') // participant, organizer
-  }, []);
+  const {
+    userId,
+    setUserId,
+    username,
+    setUsername,
+    usertype,
+    setUsertype,
+  } = useUserContext();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [selectedDistrict, setSelectedDistrict] = useState("all")
-  const [showType, setShowType] = useState("all")
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedDistrict, setSelectedDistrict] = useState("all");
+  const [showType, setShowType] = useState("all");
+  const carouselRef = useRef<HTMLDivElement>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const slideIntervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store the interval
 
+  // Check if user data is stored on component mount
   useEffect(() => {
+    // If userId exists after loading from localStorage, set isLoggedIn to true
     setIsLoggedIn(userId !== undefined && userId !== '');
   }, [userId]);
 
@@ -127,6 +125,8 @@ export default function Component(/*{ userType, userName, isLoggedIn }: UserDeta
     setUserId('');
     setUsername('');
     setUsertype('');
+    setIsLoggedIn(false); // Set logged in state to false
+    // router.push('/'); // Redirect to home page or login page after logout
   };
 
   const handleCardClick = (item: any) => {

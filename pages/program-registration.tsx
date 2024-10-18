@@ -8,11 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trash2, Plus, X } from 'lucide-react'
 import { useToast } from "@/components/ui/use-toast"
+import config from '@/config'
+
+
+const ImageFile = 'files/imgs/defaults/events/'
 
 // Mock data for the program
 const programData = {
-  isGroupEvent: false,
-  programImage: "/placeholder.svg?height=300&width=400",
+  isGroupEvent: false,image: `${config.api.host}${ImageFile}hackathon.webp?height=300&width=400`,
   programTitle: "AI & Machine Learning Hackathon",
   eventTitle: "TechFest 2023",
   description: "Develop an AI solution for a real-world problem within 36 hours. All code must be original and created during the event.",
@@ -141,7 +144,7 @@ export default function ProgramRegistration() {
           </CardHeader>
           <CardContent>
             <div className="mb-6">
-              <img src={programData.programImage} alt={programData.programTitle} className="w-full h-48 object-cover rounded-lg" />
+              <img src={programData.image} alt={programData.programTitle} className="w-full h-48 object-cover rounded-lg" />
               <h2 className="text-xl font-semibold mt-4">{programData.programTitle}</h2>
               <p className="text-gray-600">{programData.eventTitle}</p>
               <p className="mt-2">{programData.description}</p>

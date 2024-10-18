@@ -40,6 +40,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import config from '@/config'
 
 type Coordinator = {
   name: string;
@@ -79,11 +80,13 @@ type Event = {
   view: 'staged' | 'published';
 }
 
+const ImageFile = 'files/imgs/defaults/events/'
+
 const event: Event = {
   id: '1',
   title: 'Tech Innovation Summit 2023',
   description: 'Join us for a day of cutting-edge technology discussions and networking opportunities with industry leaders.',
-  image: './placeholder.svg?height=400&width=800',
+  image: `${config.api.host}${ImageFile}ai.jpg?height=400&width=800`,
   eventType: 'Conference',
   date: '2023-09-15T09:00:00',
   location: 'San Francisco Convention Center, CA',
@@ -100,7 +103,7 @@ const event: Event = {
       venue: 'Main Hall',
       time: '10:00 - 11:30',
       regFee: 50,
-      image: '/placeholder.svg?height=200&width=200',
+      image: `${config.api.host}${ImageFile}ai-health.jpg?height=200&width=200`,
       rulesRegulations: 'Participants must bring their own laptops. No prior experience required.',
       rulesRegulationsFile: '/ai-workshop-rules.pdf',
       isTeamEvent: false,
@@ -116,7 +119,7 @@ const event: Event = {
       venue: 'Workshop Room A',
       time: '13:00 - 14:30',
       regFee: 75,
-      image: '/placeholder.svg?height=200&width=200',
+      image: `${config.api.host}${ImageFile}blockchain.jpeg?height=200&width=200`,
       rulesRegulations: 'Open to all attendees. Q&A session included.',
       rulesRegulationsFile: '/blockchain-panel-rules.pdf',
       isTeamEvent: false,
@@ -132,7 +135,7 @@ const event: Event = {
       venue: 'Conference Room B',
       time: '15:00 - 16:30',
       regFee: 60,
-      image: '/placeholder.svg?height=200&width=200',
+      image: `${config.api.host}${ImageFile}cyber.png?height=200&width=200`,
       rulesRegulations: 'Teams of 2-4 members. Basic coding knowledge required.',
       rulesRegulationsFile: '/cybersecurity-challenge-rules.pdf',
       isTeamEvent: true,
