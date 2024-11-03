@@ -15,7 +15,8 @@ const ImageFile = 'files/imgs/defaults/events/'
 
 // Mock data for the program
 const programData = {
-  isGroupEvent: false,image: `${config.api.host}${ImageFile}hackathon.webp?height=300&width=400`,
+  isGroupEvent: false
+  ,image: `${config.api.host}${ImageFile}hackathon.webp?height=300&width=400`,
   programTitle: "AI & Machine Learning Hackathon",
   eventTitle: "TechFest 2023",
   description: "Develop an AI solution for a real-world problem within 36 hours. All code must be original and created during the event.",

@@ -17,12 +17,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-
 import { cn } from "@/lib/utils"
 import { useUserContext } from "@/components/contexts/UserContext"
 import config from "@/config"
 import { useRouter } from "next/navigation"
-import {toast, Toaster } from "sonner"
+import { toast, Toaster } from "sonner"
 import axios from "axios"
 
 const districts = [
@@ -46,7 +45,6 @@ const countryCodes = [
   { value: "+1", label: "+1 (US)" },
   { value: "+44", label: "+44 (UK)" },
   { value: "+91", label: "+91 (IN)" },
-  // Add more country codes as needed
 ]
 
 const defaultAvatars = [
@@ -73,12 +71,13 @@ const interestCategories = {
   "History": ["Heritage", "Reenactments", "Genealogy", "Local History", "Preservation", "Archaeology"],
   "Themes": ["Innovation", "Cultures", "Future Work", "Digital Nomads", "Diversity", "Nature", "Art-Tech Fusion", "Tradition", "Mindfulness", "Local Talent"]
 }
+
 const identifierColumns = {
   participant: {
     PID: 'PID',
     PName: 'PName',
     PEmail: 'PEmail',
-    PAvatar: 'PAvatar',
+    PAvatar: 'PImage',
     PCode: 'PCode',
     PPhone: 'PPhone',
     PLocation: 'PLocation',
@@ -91,7 +90,7 @@ const identifierColumns = {
     OID: 'OID',
     OName: 'OName',
     OEmail: 'OEmail',
-    OAvatar: 'OAvatar',
+    OAvatar: 'OImage',
     OCode: 'OCode',
     OPhone: 'OPhone',
     OLocation: 'OLocation',
@@ -163,7 +162,6 @@ const saveData = async (
   }
 }
 
-
 export default function Component() {
   const {
     userId,
@@ -194,18 +192,33 @@ export default function Component() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
   const [website, setWebsite] = useState("")
   const [address, setAddress] = useState("")
-  const [passwordChangeMessage, setPasswordChangeMessage] = useState("")
   const [countryCode, setCountryCode] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [gps, setGps] = useState("")
+  const [croppedImage, setCroppedImage] = useState<string | null>(null)
   const router = useRouter()
 
   const [initialData, setInitialData] = useState<Record<string, any>>({})
+  const [avatarType, setAvatarType] = useState<'default' | 'uploaded' | 'provided'>('default')
 
-  useEffect(() => {
-    setUserId('1')
-    setUsertype('participant')
-  }, [])
+  const [errors, setErrors] = useState({
+    name: false,
+    email: false,
+    phoneNumber: false,
+    password: false,
+    course: false,
+    department: false,
+    institute: false,
+    location: false,
+    website: false,
+    address: false,
+    gps: false,
+  })
+
+  // useEffect(() => {
+  //   setUserId('1')
+  //   setUsertype('organizer')
+  // }, [])
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -215,6 +228,8 @@ export default function Component() {
         const columnTargets = Object.values(columns)
         const data = await fetchData(table, userId, columns.PID || columns.OID, columnTargets)
         
+        // console.log(data)
+
         if (data) {
           setInitialData(data)
           setName(data[columns.PName || columns.OName] || "")
@@ -241,12 +256,14 @@ export default function Component() {
     fetchUserData()
   }, [userId, usertype])
 
-  useEffect(() => {
-    toast(passwordChangeMessage)
-  }, [passwordChangeMessage])
+  const validateEmail = (email: string) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    return re.test(String(email).toLowerCase())
+  }
 
   const handleAvatarChange = (newAvatar: string) => {
     setAvatar(newAvatar)
+    setAvatarType('provided')
   }
 
   const toggleInterest = (interest: string) => {
@@ -275,18 +292,59 @@ export default function Component() {
 
   const handleCropConfirm = useCallback(async () => {
     try {
-      const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels);
-      setAvatar(croppedImage);
-      setIsCropping(false);
+      const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels)
+      setCroppedImage(croppedImage)
+      setAvatar(croppedImage)
+      setAvatarType('uploaded')
+      setIsCropping(false)
     } catch (error) {
-      console.error("Error cropping image:", error);
+      console.error("Error cropping image:", error)
+      toast.error("Failed to crop image. Please try again.")
     }
-  }, [tempImage, croppedAreaPixels]);
+  }, [tempImage, croppedAreaPixels])
+
+  const uploadImage = async (croppedImage: string) => {
+    try {
+      // Convert base64 to blob
+      const response = await fetch(croppedImage)
+      const blob = await response.blob()
+
+      // Create a File object
+      const file = new File([blob], "profile_image.jpg", { type: "image/jpeg" })
+
+      // Create FormData and append the file
+      const formData = new FormData()
+      formData.append('type','avatar')
+      formData.append('file', file)
+
+      // Send the request
+      const uploadResponse = await axios.post(`${config.api.host}${config.api.routes.upload}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      if (uploadResponse.data.success) {
+        return uploadResponse.data.url
+      } else {
+        throw new Error("Failed to upload image")
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error)
+      throw error
+    }
+  }
 
   const handlePasswordChange = () => {
+    if (!newPassword.trim()) {
+      setErrors(prev => ({ ...prev, password: true }))
+      toast.error("Password cannot be empty.")
+      return
+    
+    }
     if (newPassword !== confirmPassword) {
-      setPasswordChangeMessage("New password and confirm password do not match.");
-      return;
+      toast.error("New password and confirm password do not match.")
+      return
     }
   
     saveData(usertype === "organizer" ? "Organizers": "Participants", 
@@ -294,54 +352,132 @@ export default function Component() {
       usertype === "organizer" ? "OID": "PID", 
       usertype === "organizer" ? "OPassword": "PPassword", newPassword)
       .then(() => {
-        setPasswordChangeMessage("Password changed successfully!");
-        setIsPasswordDialogOpen(false);
+        toast.success("Password changed successfully!")
+        setIsPasswordDialogOpen(false)
       })
       .catch((error) => {
-        console.error("Failed to change password:", error);
-        setPasswordChangeMessage("Failed to change password. Please try again.");
-      });
-  };
+        console.error("Failed to change password:", error)
+        toast.error("Failed to change password. Please try again.")
+      })
+  }
 
   const onClose = () => {
     router.push('/home')
   }
 
+  const validateField = (field: string, value: string) => {
+    switch (field) {
+      case 'name':
+      case 'course':
+      case 'department':
+      case 'institute':
+      case 'website':
+      case 'address':
+      case 'gps':
+        return value.trim() !== ''
+      case 'email':
+        return validateEmail(value)
+      case 'phoneNumber':
+        return value.trim() !== ''
+      case 'location':
+        return value !== ''
+      default:
+        return true
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    const isValid = validateField(field, value)
+    setErrors(prev => ({ ...prev, [field]: !isValid }))
+  }
+
   const handleSaveChanges = async (event: React.FormEvent) => {
     event.preventDefault()
+
+    // Validate all fields
+    const newErrors = {
+      name: !validateField('name', name),
+      phoneNumber: !validateField('phoneNumber', phoneNumber),
+      course: usertype === 'participant' && !validateField('course', course),
+      department: usertype === 'participant' && !validateField('department', department),
+      institute: !validateField('institute', institute),
+      location: !validateField('location', location),
+      website: usertype === 'organizer' && !validateField('website', website),
+      address: usertype === 'organizer' && !validateField('address', address),
+      gps: usertype === 'organizer' && !validateField('gps', gps),
+    }
+
+    setErrors(newErrors)
+
+    if (Object.values(newErrors).some(error => error)) {
+      toast.error("Please fill in all required fields correctly.")
+      return
+    }
+
     const table = usertype === "participant" ? "Participants" : "Organizers"
     const columns = identifierColumns[usertype as 'participant' | 'organizer']
 
     const updatePromises = []
+    let updatedFieldsCount = 0
 
-    const updateIfChanged = (value: any, column: string) => {
+    const updateIfChanged = async (value: any, column: string) => {
       if (value !== initialData[column]) {
-        updatePromises.push(saveData(table, userId, columns.PID || columns.OID, column, value))
+        if (column === columns.PAvatar || column === columns.OAvatar) {
+          if (avatarType === 'uploaded' && croppedImage) {
+            try {
+              const uploadedImageUrl = await uploadImage(croppedImage)
+              updatedFieldsCount++
+              return saveData(table, userId, columns.PID || columns.OID, column, uploadedImageUrl)
+            } catch (error) {
+              console.error("Error uploading image:", error)
+              toast.error("Failed to upload image. Please try again.")
+              return false
+            }
+          } else if (avatarType === 'provided' && avatar !== initialData[column]) {
+            updatedFieldsCount++
+            return saveData(table, userId, columns.PID || columns.OID, column, avatar)
+          }
+        } else {
+          updatedFieldsCount++
+          return saveData(table, userId, columns.PID || columns.OID, column, value)
+        }
       }
+      return true
     }
 
-    updateIfChanged(name, columns.PName || columns.OName)
-    updateIfChanged(email, columns.PEmail || columns.OEmail)
-    updateIfChanged(avatar, columns.PAvatar || columns.OAvatar)
-    updateIfChanged(countryCode, columns.PCode || columns.OCode)
-    updateIfChanged(phoneNumber, columns.PPhone || columns.OPhone)
-    updateIfChanged(location, columns.PLocation || columns.OLocation)
-    updateIfChanged(institute, columns.PInstitute || columns.OInstitute)
+    updatePromises.push(updateIfChanged(name, columns.PName || columns.OName))
+    updatePromises.push(updateIfChanged(countryCode, columns.PCode || columns.OCode))
+    updatePromises.push(updateIfChanged(phoneNumber, columns.PPhone || columns.OPhone))
+    updatePromises.push(updateIfChanged(location, columns.PLocation || columns.OLocation))
+    updatePromises.push(updateIfChanged(institute, columns.PInstitute || columns.OInstitute))
 
     if (usertype === "participant") {
-      updateIfChanged(course, columns.PCourse)
-      updateIfChanged(department, columns.PDepartment)
-      updateIfChanged(JSON.stringify(interests), columns.PInterests)
+      updatePromises.push(updateIfChanged(course, columns.PCourse))
+      updatePromises.push(updateIfChanged(department, columns.PDepartment))
+      updatePromises.push(updateIfChanged(JSON.stringify(interests), columns.PInterests))
     } else {
-      updateIfChanged(gps, columns.OGPS)
-      updateIfChanged(website, columns.OWebsite)
-      updateIfChanged(address, columns.OAddress)
+      updatePromises.push(updateIfChanged(gps, columns.OGPS))
+      updatePromises.push(updateIfChanged(website, columns.OWebsite))
+      updatePromises.push(updateIfChanged(address, columns.OAddress))
+    }
+
+    // Only update avatar if it has changed
+    if (avatarType === 'uploaded' || (avatarType === 'provided' && avatar !== initialData[columns.PAvatar || columns.OAvatar])) {
+      updatePromises.push(updateIfChanged(avatar, columns.PAvatar || columns.OAvatar))
     }
 
     try {
       const results = await Promise.all(updatePromises)
       if (results.every(result => result)) {
-        toast.success("Profile updated successfully!")
+        if (updatedFieldsCount > 0) {
+          if (updatedFieldsCount === 1) {
+            toast.success("1 field was updated successfully!")
+          } else {
+            toast.success(`${updatedFieldsCount} fields were updated successfully!`)
+          }
+        } else {
+          toast.info("No changes were made to your profile.")
+        }
       } else {
         toast.error("Some profile updates failed. Please try again.")
       }
@@ -350,10 +486,6 @@ export default function Component() {
       toast.error("Failed to update profile. Please try again.")
     }
   }
-
-
-
-  
 
   return (
     <div className="min-h-screen bg-gray-100 py-4">
@@ -373,7 +505,7 @@ export default function Component() {
               <Label>Profile Picture</Label>
               <div className="flex flex-wrap items-center gap-4 mt-2">
                 <Avatar className="w-20 h-20 md:w-24 md:h-24">
-                  <AvatarImage src={`${config.api.host}${avatar}`} alt="Profile picture" />
+                  <AvatarImage src={avatarType === 'uploaded' ? croppedImage : `${config.api.host}${avatar}`} alt="Profile picture" />
                   <AvatarFallback>{name ? name.charAt(0) : "?"}</AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
@@ -427,12 +559,18 @@ export default function Component() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div>
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    handleInputChange('name', e.target.value)
+                  }}
+                  className={errors.name ? "border-red-500" : ""}
+                  required
                 />
+                {errors.name && <p className="text-red-500 text-sm mt-1">Name is required</p>}
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
@@ -440,13 +578,14 @@ export default function Component() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  readOnly
+                  className="bg-gray-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contactNumber">Contact Number</Label>
+                <Label htmlFor="contactNumber">Contact Number *</Label>
                 <div className="flex space-x-2">
-                  <Select  value={countryCode} onValueChange={setCountryCode}>
+                  <Select value={countryCode} onValueChange={setCountryCode} required>
                     <SelectTrigger className="w-[120px]">
                       <SelectValue placeholder="Code" />
                     </SelectTrigger>
@@ -461,78 +600,101 @@ export default function Component() {
                   <Input 
                     id="contactNumber" 
                     value={phoneNumber} 
-                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value)
+                      handleInputChange('phoneNumber', e.target.value)
+                    }}
                     type="tel" 
                     required 
-                    className="flex-1" 
+                    className={cn("flex-1", errors.phoneNumber ? "border-red-500" : "")}
                   />
                 </div>
+                {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">Phone number is required</p>}
               </div>
+              
               {usertype === 'participant' && (
                 <>
                   <div>
-                    <Label htmlFor="course">Current Course</Label>
+                    <Label htmlFor="course">Current Course *</Label>
                     <Input
                       id="course"
                       value={course}
                       onChange={(e) => setCourse(e.target.value)}
+                      className={errors.course ? "border-red-500" : ""}
+                      required
                     />
+                    {errors.course && <p className="text-red-500 text-sm mt-1">Course is required</p>}
                   </div>
                   <div>
-                    <Label htmlFor="department">Department</Label>
+                    <Label htmlFor="department">Department *</Label>
                     <Input
                       id="department"
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
+                      className={errors.department ? "border-red-500" : ""}
+                      required
                     />
+                    {errors.department && <p className="text-red-500 text-sm mt-1">Department is required</p>}
                   </div>
                 </>
               )}
               {usertype === 'organizer' && (
                 <>
                   <div>
-                    <Label htmlFor="website">Website</Label>
+                    <Label htmlFor="website">Website *</Label>
                     <Input
                       id="website"
                       value={website}
                       onChange={(e) => setWebsite(e.target.value)}
+                      className={errors.website ? "border-red-500" : ""}
+                      required
                     />
+                    {errors.website && <p className="text-red-500 text-sm mt-1">Website is required</p>}
                   </div>
                   <div>
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">Address *</Label>
                     <Input
                       id="address"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
+                      className={errors.address ? "border-red-500" : ""}
+                      required
                     />
+                    {errors.address && <p className="text-red-500 text-sm mt-1">Address is required</p>}
                   </div>
                   <div>
-                    <Label htmlFor="gps">GPS Link</Label>
+                    <Label htmlFor="gps">GPS Link *</Label>
                     <Input
                       id="gps"
                       value={gps}
                       onChange={(e) => setGps(e.target.value)}
+                      className={errors.gps ? "border-red-500" : ""}
+                      required
                     />
+                    {errors.gps && <p className="text-red-500 text-sm mt-1">GPS Link is required</p>}
                   </div>
                 </>
               )}
               <div>
-                <Label htmlFor="institute">Institute</Label>
+                <Label htmlFor="institute">Institute *</Label>
                 <Input
                   id="institute"
                   value={institute}
                   onChange={(e) => setInstitute(e.target.value)}
+                  className={errors.institute ? "border-red-500" : ""}
+                  required
                 />
+                {errors.institute && <p className="text-red-500 text-sm mt-1">Institute is required</p>}
               </div>
               <div>
-                <Label htmlFor="location">{usertype === 'participant' ? 'Location Preference' : 'Location'}</Label>
+                <Label htmlFor="location">{usertype === 'participant' ? 'Location Preference *' : 'Location *'}</Label>
                 <Popover open={locationOpen} onOpenChange={setLocationOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       role="combobox"
                       aria-expanded={locationOpen}
-                      className="w-full justify-between"
+                      className={cn("w-full justify-between", errors.location ? "border-red-500" : "")}
                     >
                       {location
                         ? districts.find((district) => district.value === location)?.label
@@ -569,10 +731,12 @@ export default function Component() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {errors.location && <p className="text-red-500 text-sm mt-1">Location is required</p>}
               </div>
             </div>
 
-            <div className="md:col-span-2 lg:col-span-3">
+            {usertype === 'participant' && (
+              <div className="md:col-span-2 lg:col-span-3">
               <Label>Interests</Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {interests.map(interest => (
@@ -595,41 +759,43 @@ export default function Component() {
                     <Plus className="mr-2 h-4 w-4" /> Add Interests
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Add Interests</DialogTitle>
-                  </DialogHeader>
-                  <Tabs defaultValue={Object.keys(interestCategories)[0]} className="w-full">
-                    <TabsList className="h-50 grid grid-cols-3 grid-rows-2 gap-y-1 gap-4">
-                      {Object.keys(interestCategories).map(category => (
-                        <TabsTrigger key={category} value={category} className="text-xs sm:text-sm">
-                          {category}
-                        </TabsTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add Interests</DialogTitle>
+                    </DialogHeader>
+                    <Tabs defaultValue={Object.keys(interestCategories)[0]} className="w-full">
+                      <TabsList className="h-50 grid grid-cols-3 grid-rows-2 gap-y-1 gap-4">
+                        {Object.keys(interestCategories).map(category => (
+                          <TabsTrigger key={category} value={category} className="text-xs sm:text-sm">
+                            {category}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      {Object.entries(interestCategories).map(([category, categoryInterests]) => (
+                        <TabsContent key={category} value={category}>
+                          <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                            <div className="grid grid-cols-2 gap-2">
+                              {categoryInterests.map(interest => (
+                                <Button
+                                  key={interest}
+                                  variant={interests.includes(interest) ? "secondary" : "outline"}
+                                  size="sm"
+                                  onClick={() => toggleInterest(interest)}
+                                  className="justify-start"
+                                >
+                                  {interest}
+                                </Button>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </TabsContent>
                       ))}
-                    </TabsList>
-                    {Object.entries(interestCategories).map(([category, categoryInterests]) => (
-                      <TabsContent key={category} value={category}>
-                        <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                          <div className="grid grid-cols-2 gap-2">
-                            {categoryInterests.map(interest => (
-                              <Button
-                                key={interest}
-                                variant={interests.includes(interest) ? "secondary" : "outline"}
-                                size="sm"
-                                onClick={() => toggleInterest(interest)}
-                                className="justify-start"
-                              >
-                                {interest}
-                              </Button>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </DialogContent>
-              </Dialog>
-            </div>
+                    </Tabs>
+                  </DialogContent>
+                </Dialog>
+                {errors.interests && <p className="text-red-500 text-sm mt-1">At least one interest is required</p>}
+              </div>
+            )}
 
             <div className="md:col-span-2 lg:col-span-3 flex flex-col md:flex-row justify-between items-center gap-4">
               <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
@@ -650,7 +816,7 @@ export default function Component() {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="col-span-3"
+                        className={cn("col-span-3", errors.password ? "border-red-500" : "")}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -666,6 +832,7 @@ export default function Component() {
                       />
                     </div>
                   </div>
+                  {errors.password && <p className="text-red-500 text-sm">Password cannot be empty</p>}
                   {newPassword !== confirmPassword && (
                     <p className="text-sm text-red-500">New password and confirm password do not match.</p>
                   )}

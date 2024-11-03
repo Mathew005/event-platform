@@ -8,5 +8,5 @@ import EventCreation from '@/pages/event-creation';
 import RegistrationAnalytics from '@/pages/registration-analytics';
 
 export default function EventPage() {
-    return <EventCreation/>;
+    return <ProfileEdit/>;
 }

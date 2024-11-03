@@ -17,23 +17,56 @@ import { addDays, format } from "date-fns";
 import { Calendar as DateCalendar } from "@/components/ui/calendar";
 import config from '@/config'
 import { useUserContext } from '@/components/contexts/UserContext'
+import axios from 'axios'
 
 const ImageFile = 'files/imgs/defaults/events/'
 
 // Mock data for events and programs
 const eventsAndPrograms = [
-  { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-15", time: "14:00", location: "Central Park, NY", category: "Music", institute: "NYC Music Institute" },
-  { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}tech_confernce.jpg`, date: "2024-08-22", time: "09:00", location: "Convention Center, SF", category: "Technology", institute: "Tech Innovators Association" },
-  { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}wine_tasting.jpg`, date: "2024-09-10", time: "11:00", location: "Expo Hall, Chicago", category: "Food", institute: "Culinary Arts Foundation" },
-  { id: 4, type: 'event', title: "Art Gallery Opening", image: `${config.api.host}${ImageFile}`, date: "2024-10-05", time: "19:00", location: "Downtown Gallery, LA", category: "Art", institute: "LA Arts Council" },
-  { id: 5, type: 'event', title: "Marathon 2024", image: `${config.api.host}${ImageFile}`, date: "2024-11-12", time: "07:00", location: "City Center, Boston", category: "Sports", institute: "Boston Athletics Association" },
-  { id: 6, type: 'program', title: "AI Workshop", image: `${config.api.host}${ImageFile}`, date: "2024-08-23", time: "10:00", location: "Convention Center, SF", category: "Technology", event: "Tech Conference 2024" },
-  { id: 7, type: 'program', title: "Wine Tasting Session", image: `${config.api.host}${ImageFile}`, date: "2024-09-11", time: "14:00", location: "Expo Hall, Chicago", category: "Food", event: "Food & Wine Expo" },
-  { id: 8, type: 'program', title: "Live Music Performance", image: `${config.api.host}${ImageFile}`, date: "2024-07-16", time: "18:00", location: "Central Park, NY", category: "Music", event: "Summer Music Festival" },
+  { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-15", time: "14:00", location: "Thiruvananthapuram", category: "Music", institute: "NYC Music Institute" },
+  { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}tech_confernce.jpg`, date: "2024-08-22", time: "09:00", location: "Palakkad", category: "Technology", institute: "Tech Innovators Association" },
+  { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}wine_tasting.jpg`, date: "2024-09-10", time: "11:00", location: "Kozhikode", category: "Food", institute: "Culinary Arts Foundation" },
+  { id: 4, type: 'event', title: "Art Gallery Opening", image: `${config.api.host}${ImageFile}art-gallery.jpg`, date: "2024-10-05", time: "19:00", location: "Malappuram", category: "Art", institute: "LA Arts Council" },
+  { id: 5, type: 'event', title: "Marathon 2024", image: `${config.api.host}${ImageFile}marathon.webp`, date: "2024-11-12", time: "07:00", location: "City Center, Boston", category: "Sports", institute: "Boston Athletics Association" },
+  { id: 6, type: 'program', title: "AI Workshop", image: `${config.api.host}${ImageFile}ai.jpg`, date: "2024-08-23", time: "10:00", location: "Palakkad", category: "Technology", event: "Tech Conference 2024" },
+  { id: 7, type: 'program', title: "Wine Tasting Session", image: `${config.api.host}${ImageFile}wine_tasting2.jpg`, date: "2024-09-11", time: "14:00", location: "Kozhikode", category: "Food", event: "Food & Wine Expo" },
+  { id: 8, type: 'program', title: "Live Music Performance", image: `${config.api.host}${ImageFile}live-music.jpg`, date: "2024-07-16", time: "18:00", location: "Thiruvananthapuram", category: "Music", event: "Summer Music Festival" },
 ]
 
 const categories = ['Music', 'Technology', 'Food', 'Sports', 'Art', 'Business', 'Health', 'Education']
-const districts = ['New York', 'San Francisco', 'Chicago', 'Los Angeles', 'Boston']
+const districts = [
+  "Thiruvananthapuram",
+  "Kollam",
+  "Pathanamthitta",
+  "Alappuzha",
+  "Kottayam",
+  "Idukki",
+  "Ernakulam",
+  "Thrissur",
+  "Palakkad",
+  "Malappuram",
+  "Kozhikode",
+  "Wayanad",
+  "Kannur",
+  "Kasaragod",
+]
+
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: {
+        table,
+        id,
+        columnIdentifier,
+        columnTargets: columnTargets.join(',')
+      }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
 
 export default function Component() {
   
@@ -56,12 +89,26 @@ export default function Component() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const slideIntervalRef = useRef<NodeJS.Timeout | null>(null); // Ref to store the interval
+  const [avatar, setAvatar] = useState("")
 
   // Check if user data is stored on component mount
   useEffect(() => {
-    // If userId exists after loading from localStorage, set isLoggedIn to true
+    const fetchAvatar = async () => {
+      if (userId) {
+        const table = usertype === 'participant' ? 'Participants' : 'Organizers'
+        const CID = usertype === 'participant' ? 'PID' : 'OID'
+        const CTarget = usertype === 'participant' ? 'PImage' : 'OImage'
+        const data = await fetchData(table, userId, CID, [CTarget]);
+        setAvatar(`${config.api.host}${data[CTarget]}`);
+      }
+    };
+  
+    // Set isLoggedIn to true if userId is valid
     setIsLoggedIn(userId !== undefined && userId !== '');
+  
+    fetchAvatar();
   }, [userId]);
+  
 
   const handleDashboard = () => {
       router.push(`/dashboard/${usertype}`);
@@ -175,7 +222,7 @@ export default function Component() {
                       <Button variant="ghost" className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                         <span className="sr-only">Open user menu</span>
                         <Avatar>
-                          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                          <AvatarImage src={avatar} alt="@shadcn" />
                           <AvatarFallback>{getInitials(username)}</AvatarFallback>
                         </Avatar>
                       </Button>
