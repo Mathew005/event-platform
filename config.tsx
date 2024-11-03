@@ -1,6 +1,6 @@
 const config = {
   api: {
-    host: 'http://192.168.0.170/cfc/',
+    host: `http://${process.env.REACT_APP_API_IP}/cfc/`,
     routes: {
       auth: 'auth.php',
       event_create: 'event_create.php',
@@ -9,7 +9,7 @@ const config = {
       save_fetch: 'save_fetch.php',
       upload: 'upload.php',
     },
-  event_img: 'files/imgs/',
+    event_img: 'files/imgs/',
   },
   db: {
     host: 'localhost',
@@ -17,7 +17,6 @@ const config = {
     password: '',
     database: 'cfc',
   },
-  
 };
 
 export default config;

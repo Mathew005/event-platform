@@ -167,10 +167,6 @@ export default function Component() {
     userId,
     username,
     usertype,
-    setUserId,
-    setUsertype,
-    fetchUserData,
-    dumpUserData,
   } = useUserContext()
 
   const [name, setName] = useState(username)
