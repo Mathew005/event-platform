@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import config from '@/config'
+import { useRouter } from 'next/navigation'
 
 type Coordinator = {
   name: string;
@@ -153,9 +154,10 @@ const event: Event = {
 export default function EventOverview() {
   const [isGridView, setIsGridView] = useState(true)
   const [currentEvent, setCurrentEvent] = useState<Event>(event)
+  const router = useRouter()
 
   const handleClose = () => {
-    console.log("Close button clicked")
+    router.push('/dashboard/organizer')
   }
 
   const handlePublish = () => {
@@ -227,7 +229,7 @@ export default function EventOverview() {
         <div className="flex flex-wrap gap-4 mb-4">
           <div className="flex items-center">
             <Calendar className="mr-2 h-5 w-5 text-gray-500" />
-            <span>{new Date(currentEvent.date).toLocaleDateString()}</span>
+            <span>{new Date(currentEvent.date).toLocaleDateString('en-GB')}</span>
           </div>
           <div className="flex items-center">
             <MapPin className="mr-2 h-5 w-5 text-gray-500" />

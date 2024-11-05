@@ -1,12 +1,11 @@
 const config = {
   api: {
-    host: `http://${process.env.REACT_APP_API_IP}/cfc/`,
+    // host: `http://${process.env.REACT_APP_API_IP}/cfc/`,
+    host: `http://localhost/cfc/`,
     routes: {
       auth: 'auth.php',
-      event_create: 'event_create.php',
-      participant: 'participant.php',
-      organizer: 'organizer.php',
       save_fetch: 'save_fetch.php',
+      set: 'set.php',
       upload: 'upload.php',
     },
     event_img: 'files/imgs/',

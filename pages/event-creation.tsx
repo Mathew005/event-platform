@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useCallback } from "react"
+import React, { useState, useCallback, useEffect } from "react"
 import { X, Check, ArrowUpRight, MapPin, Trash2, Loader2 } from "lucide-react"
 import Cropper from "react-easy-crop"
-import { addDays, format } from "date-fns"
+import { format, addDays } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,32 +22,33 @@ import axios from "axios"
 import config from "@/config"
 import { toast, Toaster } from "sonner"
 import { useUserContext } from "@/components/contexts/UserContext"
+import { useEventContext } from "@/components/contexts/EventContext"
 
 const availableFestTypes = [
-  { "value": "technology", "label": "Technology" },
-  { "value": "cultural", "label": "Culture" },
-  { "value": "commerce", "label": "Commerce" },
-  { "value": "science", "label": "Science" },
-  { "value": "sports", "label": "Sports" },
-  { "value": "lifestyle", "label": "Lifestyle" },
-  { "value": "health", "label": "Health" },
-  { "value": "environment", "label": "Environment" },
-  { "value": "education", "label": "Education" },
-  { "value": "social", "label": "Social" },
-  { "value": "gaming", "label": "Gaming" },
-  { "value": "food", "label": "Food" },
-  { "value": "travel", "label": "Travel" },
-  { "value": "crafts", "label": "Crafts" },
-  { "value": "film", "label": "Film" },
-  { "value": "history", "label": "History" },
-  { "value": "themes", "label": "Themes" }
+  { value: "technology", label: "Technology" },
+  { value: "cultural", label: "Culture" },
+  { value: "commerce", label: "Commerce" },
+  { value: "science", label: "Science" },
+  { value: "sports", label: "Sports" },
+  { value: "lifestyle", label: "Lifestyle" },
+  { value: "health", label: "Health" },
+  { value: "environment", label: "Environment" },
+  { value: "education", label: "Education" },
+  { value: "social", label: "Social" },
+  { value: "gaming", label: "Gaming" },
+  { value: "food", label: "Food" },
+  { value: "travel", label: "Travel" },
+  { value: "crafts", label: "Crafts" },
+  { value: "film", label: "Film" },
+  { value: "history", label: "History" },
+  { value: "themes", label: "Themes" }
 ]
 
 const districts = [
   { value: "thiruvananthapuram", label: "Thiruvananthapuram" },
   { value: "kollam", label: "Kollam" },
   { value: "pathanamthitta", label: "Pathanamthitta" },
-  { value: "alappuzha", label:  "Alappuzha" },
+  { value: "alappuzha", label: "Alappuzha" },
   { value: "kottayam", label: "Kottayam" },
   { value: "idukki", label: "Idukki" },
   { value: "ernakulam", label: "Ernakulam" },
@@ -60,17 +61,91 @@ const districts = [
   { value: "kasaragod", label: "Kasaragod" },
 ]
 
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: { table, id, columnIdentifier, columnTargets: columnTargets.join(',') }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+const saveData = async (
+  table: string,
+  identifier: string,
+  identifierColumn: string,
+  target: string,
+  data: any
+) => {
+  if (data === undefined || data === null) {
+    console.error(`Attempted to update ${target} with undefined or null value`)
+    return false
+  }
+
+  try {
+    const response = await axios.post(
+      `${config.api.host}${config.api.routes.save_fetch}`,
+      { table, identifier, identifierColumn, target, data },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+
+    const result = response.data
+
+    if (result.success) {
+      console.log(`Successfully updated ${target}`)
+      return true
+    } else {
+      console.error(`Failed to update ${target}: ${result.message}`)
+      return false
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    return false
+  }
+}
+
+const insertData = async (table: string, data: any) => {
+  if (!table || !data) {
+    console.error('Table name and data must be provided')
+    return false
+  }
+
+  try {
+    const response = await axios.post(
+      `${config.api.host}${config.api.routes.set}`,
+      { table, data },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+
+    const result = response.data
+
+    if (result.success) {
+      console.log('Data inserted successfully')
+      return result.insertId
+    } else {
+      console.error(`Failed to insert data: ${result.message}`)
+      return false
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    return false
+  }
+}
+
 export default function Component() {
   const [eventName, setEventName] = useState("")
   const [festTypes, setFestTypes] = useState<string[]>([])
   const [description, setDescription] = useState("")
   const [isMultiDay, setIsMultiDay] = useState(false)
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+  const [fromDate, setFromDate] = useState<Date | null>(null)
+  const [toDate, setToDate] = useState<Date | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [locationOpen, setLocationOpen] = useState(false)
-  const [location, setLocation] = useState("");
-  const [coordinators, setCoordinators] = useState([{ name: "", phone: "", email: "", isFaculty: false }]);
+  const [location, setLocation] = useState("")
+  const [coordinators, setCoordinators] = useState([{ name: "", phone: "", email: "", isFaculty: false }])
   const [tempImage, setTempImage] = useState<string>("")
   const [croppedImage, setCroppedImage] = useState<string>("")
   const [isCropping, setIsCropping] = useState(false)
@@ -79,12 +154,86 @@ export default function Component() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
-  const { userId, username} = useUserContext();
+  const [formSubmitted, setFormSubmitted] = useState(false)
+  const { eventId, setEventId } = useEventContext()
+  const { userId, setUserId } = useUserContext()
   const router = useRouter()
 
   const onClose = () => {
     router.push('/dashboard/organizer')
   }
+
+  useEffect(() => {
+    setUserId('1')
+    setEventId('1')
+  }, [])
+
+  useEffect(() => {
+    const fetchEventData = async () => {
+      if (eventId) {
+        try {
+          const eventData = await fetchData('Events', eventId, 'EID', ['EName', 'ELocation', 'EType', 'EImage', 'EStartDate', 'EndDate', 'EDecription', 'CID'])
+          // console.log(eventData)
+          if (eventData) {
+            setEventName(eventData.EName)
+            setLocation(eventData.ELocation)
+            setFestTypes(eventData.EType.split(','))
+            setCroppedImage(`${config.api.host}${eventData.EImage}`)
+            const startDate = new Date(eventData.EStartDate)
+            const endDate = new Date(eventData.EndDate)
+            setFromDate(startDate)
+            setToDate(endDate)
+            setDescription(eventData.EDecription)
+            const isMulti = startDate.toDateString() !== endDate.toDateString()
+            setIsMultiDay(isMulti)
+            if (isMulti) {
+              setDateRange({ from: startDate, to: endDate })
+            }
+
+            const coordinatorData = await fetchData('Coordinators', eventData.CID, 'CID', ['Name1', 'Email1', 'Phone1', 'Faculty1', 'Name2', 'Email2', 'Phone2', 'Faculty2', 'Name3', 'Email3', 'Phone3', 'Faculty3', 'Name4', 'Email4', 'Phone4', 'Faculty4'])
+            if (coordinatorData) {
+              const newCoordinators = []
+              for (let i = 1; i <= 4; i++) {
+                newCoordinators.push({
+                  name: coordinatorData[`Name${i}`] || "",
+                  email: coordinatorData[`Email${i}`] || "",
+                  phone: coordinatorData[`Phone${i}`] || "",
+                  isFaculty: coordinatorData[`Faculty${i}`] || false
+                })
+              }
+              setCoordinators(newCoordinators)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching event data:', error)
+          toast.error('Failed to load event data')
+        }
+      }
+    }
+
+    fetchEventData()
+  }, [eventId])
+
+  const validateForm = useCallback(() => {
+    const newErrors: Record<string, boolean> = {}
+    if (!eventName.trim()) newErrors.eventName = true
+    if (festTypes.length === 0) newErrors.festTypes = true
+    if (!description.trim()) newErrors.description = true
+    if (!croppedImage) newErrors.eventImage = true
+    if (isMultiDay && (!fromDate || !toDate)) newErrors.dateRange = true
+    if (!isMultiDay && !fromDate) newErrors.date = true
+    if (!location) newErrors.location = true
+    if (!coordinators.some(c => c.name.trim() && c.phone.trim() && c.email.trim())) newErrors.coordinators = true
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }, [eventName, festTypes, description, croppedImage, isMultiDay, fromDate, toDate, location, coordinators])
+
+  useEffect(() => {
+    if (formSubmitted) {
+      validateForm()
+    }
+  }, [eventName, festTypes, description, croppedImage, isMultiDay, fromDate, toDate, location, coordinators, validateForm, formSubmitted])
 
   const handleCustomAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -112,80 +261,111 @@ export default function Component() {
     }
   }, [tempImage, croppedAreaPixels])
 
-  const validateForm = () => {
-    const newErrors: Record<string, boolean> = {}
-    if (!eventName) newErrors.eventName = true
-    if (festTypes.length === 0) newErrors.festTypes = true
-    if (!description) newErrors.description = true
-    if (!croppedImage) newErrors.eventImage = true
-    if (isMultiDay && (!fromDate || !toDate)) newErrors.dateRange = true
-    if (!isMultiDay && !fromDate) newErrors.date = true
-    if (!location) newErrors.location = true
-    if (!coordinators[0]?.name) newErrors.coordinators = true
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-  
+    e.preventDefault()
+    setFormSubmitted(true)
+    setIsSubmitting(true)
+
     if (!validateForm()) {
-      setIsSubmitting(false);
-      toast.error("Please fill in all required fields.");
-      return;
+      setIsSubmitting(false)
+      toast.error("Please fill in all required fields.")
+      return
     }
-  
-    // Create a FormData object to include the event data and image
-    const formData = new FormData();
-    formData.append("eventName", eventName);
-    formData.append("festTypes", festTypes.join(",")); // Assuming festTypes is an array
-    formData.append("description", description);
-    formData.append("isMultiDay", isMultiDay.toString());
-    formData.append("fromDate", fromDate.toISOString()); // Convert to ISO format
-    formData.append("toDate", (toDate || fromDate).toISOString());
-    formData.append("location", location);
-  
-    // Append coordinators data
-    coordinators.forEach((coordinator, index) => {
-      formData.append(`coordinators[${index}][name]`, coordinator.name);
-      formData.append(`coordinators[${index}][phone]`, coordinator.phone);
-      formData.append(`coordinators[${index}][email]`, coordinator.email);
-      formData.append(`coordinators[${index}][isFaculty]`, coordinator.isFaculty.toString());
-    });
-  
-    // Append the cropped image (converted to Blob)
-    if (croppedImage) {
-      const imageBlob = await fetch(croppedImage).then((res) => res.blob());
-      formData.append("eventImage", imageBlob, "event-image.jpg");
-    }
-    console.log(formData)
+
     try {
-      // Replace the simulation with actual API call
-      const response = await axios.post(`${config.api.host}${config.api.routes.event_create}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-  
-      // Show success toast
-      toast.success("Event Created", {
-        description: `${eventName} has been scheduled for ${
+      let imageUrl = croppedImage
+      if (tempImage) {
+        imageUrl = await uploadImage(croppedImage)
+      }
+
+      const coordinatorData: Record<string, any> = {}
+      for (let i = 0; i < 4; i++) {
+        const coordinator = coordinators[i] || { name: "", phone: "", email: "", isFaculty: false }
+        const num = i + 1
+        coordinatorData[`Name${num}`] = coordinator.name.trim()
+        coordinatorData[`Email${num}`] = coordinator.email.trim()
+        coordinatorData[`Phone${num}`] = coordinator.phone.trim()
+        coordinatorData[`Faculty${num}`] = coordinator.isFaculty
+      }
+
+      let coordinatorId
+      if (eventId) {
+        const eventData = await fetchData('Events', eventId, 'EID', ['CID'])
+        coordinatorId = eventData.CID
+        for (const [key, value] of Object.entries(coordinatorData)) {
+          await saveData('Coordinators', coordinatorId, 'CID', key, value)
+        }
+      } else {
+        coordinatorId = await insertData('Coordinators', coordinatorData)
+      }
+
+      if (!coordinatorId) {
+        throw new Error('Failed to insert/update coordinator data')
+      }
+
+      const eventData = {
+        OID: userId,
+        EName: eventName,
+        ELocation: location,
+        EType: festTypes.join(','),
+        EImage: imageUrl.replace(config.api.host, ''),
+        EStartDate: addDays(fromDate!, 1).toISOString(),
+        EndDate: addDays(toDate || fromDate!, 1).toISOString(),
+        EDecription: description,
+        CID: coordinatorId,
+      }
+
+      if (eventId) {
+        for (const [key, value] of Object.entries(eventData)) {
+          await saveData('Events', eventId, 'EID', key, value)
+        }
+      } else {
+        await insertData('Events', eventData)
+      }
+
+      toast.success(eventId ? "Event Updated" : "Event Created", {
+        duration: 5000,
+        description: `${eventName} has been ${eventId ? 'updated' : 'scheduled'} for ${
           isMultiDay
             ? `${format(fromDate!, "PP")} to ${format(toDate || fromDate!, "PP")}`
-            : format(fromDate!, "PP")
-        } at ${location}.`,
-      });
-  
-      // Delay navigation to allow the user to read the toast message
+            :   format(fromDate!, "PP")
+        } at ${location.toUpperCase()}.`,
+      })
+
       setTimeout(() => {
-        router.push("/dashboard/organizer");
-      }, 5000);
+        router.push("/dashboard/organizer")
+      }, 5000)
     } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error("Failed to create event. Please try again.");
-      setIsSubmitting(false);
+      console.error("Error creating/updating event:", error)
+      toast.error(`Failed to ${eventId ? 'update' : 'create'} event. Please try again.`)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const uploadImage = async (croppedImage: string) => {
+    try {
+      const response = await fetch(croppedImage)
+      const blob = await response.blob()
+      const file = new File([blob], "event_image.jpg", { type: "image/jpeg" })
+      const formData = new FormData()
+      formData.append('type', 'event')
+      formData.append('file', file)
+
+      const uploadResponse = await axios.post(`${config.api.host}${config.api.routes.upload}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      if (uploadResponse.data.success) {
+        return uploadResponse.data.url
+      } else {
+        throw new Error("Failed to upload image")
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error)
+      throw error
     }
   }
 
@@ -201,13 +381,18 @@ export default function Component() {
     )
   }
 
+  const sanitizeInput = (input: string) => {
+    return input.replace(/[^a-zA-Z0-9@.\s]/g, '')
+  }
+
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8">
       <Toaster richColors />
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <form onSubmit={handleSubmit} className="space-y-8 p-6 sm:p-8 md:p-10">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Create Event</h1>
+            <h1 className="text-2xl font-bold">{eventId ? 'Edit Event' : 'Create Event'}</h1>
             <Button type="button" variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -216,18 +401,18 @@ export default function Component() {
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="eventName" className={errors.eventName ? "text-red-500" : ""}>Event Name</Label>
+                <Label htmlFor="eventName" className={formSubmitted && errors.eventName ? "text-red-500" : ""}>Event Name</Label>
                 <Input 
                   id="eventName" 
                   value={eventName} 
                   onChange={(e) => setEventName(e.target.value)} 
                   placeholder="Enter Event Name"
-                  className={errors.eventName ? "border-red-500" : ""}
+                  className={formSubmitted && errors.eventName ? "border-red-500" : ""}
                 />
               </div>
 
               <div>
-                <Label className={errors.festTypes ? "text-red-500" : ""}>Fest Types</Label>
+                <Label className={formSubmitted && errors.festTypes ? "text-red-500" : ""}>Fest Types</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {availableFestTypes.map((type) => (
                     <Button
@@ -235,34 +420,33 @@ export default function Component() {
                       type="button"
                       variant={festTypes.includes(type.value) ? "default" : "outline"}
                       onClick={() => toggleFestType(type.value)}
-                      className={errors.festTypes ? "border-red-500" : ""}
                     >
                       {type.label}
                     </Button>
                   ))}
                 </div>
+                {formSubmitted && errors.festTypes && <p className="text-red-500 text-sm mt-1">Please select at least one event type</p>}
               </div>
 
               <div>
-                <Label htmlFor="description" className={errors.description ? "text-red-500" : ""}>Description</Label>
+                <Label htmlFor="description" className={formSubmitted && errors.description ? "text-red-500" : ""}>Description</Label>
                 <Textarea 
                   id="description" 
                   value={description} 
                   placeholder="Enter Event Description" 
                   onChange={(e) => setDescription(e.target.value)}
-                  className={errors.description ? "border-red-500" : ""}
+                  className={formSubmitted && errors.description ? "border-red-500" : ""}
                 />
               </div>
 
-
               <div>
-                <Label htmlFor="eventImage" className={errors.eventImage ? "text-red-500" : ""}>Event Image</Label>
+                <Label htmlFor="eventImage" className={formSubmitted && errors.eventImage ? "text-red-500" : ""}>Event Image</Label>
                 <Input 
                   id="eventImage" 
                   type="file" 
                   accept="image/*" 
                   onChange={handleCustomAvatarUpload} 
-                  className={`w-full ${errors.eventImage ? "border-red-500" : ""}`}
+                  className={`w-full ${formSubmitted && errors.eventImage ? "border-red-500" : ""}`}
                 />
                 {croppedImage && (
                   <img src={croppedImage} alt="Cropped event image" className="mt-2 max-w-full h-auto rounded-lg" />
@@ -271,6 +455,7 @@ export default function Component() {
             </div>
 
             <div className="space-y-4">
+              
               <div>
                 <Label>Event Duration</Label>
                 <RadioGroup value={isMultiDay ? "multi" : "single"} onValueChange={(value) => setIsMultiDay(value === "multi")}>
@@ -287,13 +472,13 @@ export default function Component() {
 
               {isMultiDay ? (
                 <div>
-                  <Label className={errors.dateRange ? "text-red-500" : ""}>Date Range</Label>
+                  <Label className={formSubmitted && errors.dateRange ? "text-red-500" : ""}>Date Range</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         type="button"
                         variant="outline" 
-                        className={`w-full justify-start text-left font-normal ${errors.dateRange ? "border-red-500" : ""}`}
+                        className={`w-full justify-start text-left font-normal ${formSubmitted && errors.dateRange ? "border-red-500" : ""}`}
                       >
                         {dateRange?.from ? (
                           dateRange.to ? (
@@ -316,8 +501,8 @@ export default function Component() {
                         selected={dateRange}
                         onSelect={(newDateRange) => {
                           setDateRange(newDateRange)
-                          setFromDate(newDateRange?.from)
-                          setToDate(newDateRange?.to)
+                          setFromDate(newDateRange?.from ?? null)
+                          setToDate(newDateRange?.to ?? null)
                         }}
                         numberOfMonths={2}
                       />
@@ -326,16 +511,15 @@ export default function Component() {
                 </div>
               ) : (
                 <div>
-                  <Label className={errors.date ? "text-red-500" : ""}>Date</Label>
+                  <Label className={formSubmitted && errors.date ? "text-red-500" : ""}>Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         type="button"
                         variant="outline" 
-                        className={`w-full justify-start text-left font-normal ${errors.date ? "border-red-500" : ""}`}
+                        className={`w-full justify-start text-left font-normal ${formSubmitted && errors.date ? "border-red-500" : ""}`}
                       >
                         {fromDate ? format(fromDate, "PPP") : <span>Pick a date</span>}
-                      
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -354,7 +538,7 @@ export default function Component() {
               )}
 
               <div>
-                <Label htmlFor="location" className={errors.location ? "text-red-500" : ""}>Location</Label>
+                <Label htmlFor="location" className={formSubmitted && errors.location ? "text-red-500" : ""}>Location</Label>
                 <Popover open={locationOpen} onOpenChange={setLocationOpen}>
                   <PopoverTrigger asChild>
                     <Button 
@@ -362,7 +546,7 @@ export default function Component() {
                       variant="outline" 
                       role="combobox" 
                       aria-expanded={locationOpen} 
-                      className={`w-full justify-between ${errors.location ? "border-red-500" : ""}`}
+                      className={`w-full justify-between ${formSubmitted && errors.location ? "border-red-500" : ""}`}
                     >
                       {location ? districts.find((district) => district.value === location)?.label : "Select district..."}
                       <MapPin className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -395,7 +579,7 @@ export default function Component() {
               </div>
 
               <div>
-                <Label className={errors.coordinators ? "text-red-500" : ""}>Coordinators</Label>
+                <Label className={formSubmitted && errors.coordinators ? "text-red-500" : ""}>Coordinators</Label>
                 <Card>
                   <CardContent className="p-4">
                     <div className="max-h-64 overflow-y-auto space-y-4">
@@ -406,17 +590,16 @@ export default function Component() {
                             value={coordinator.name}
                             onChange={(e) => {
                               const newCoordinators = [...coordinators]
-                              newCoordinators[index].name = e.target.value
+                              newCoordinators[index].name = sanitizeInput(e.target.value)
                               setCoordinators(newCoordinators)
                             }}
-                            className={index === 0 && errors.coordinators ? "border-red-500" : ""}
                           />
                           <Input
                             placeholder="Phone"
                             value={coordinator.phone}
                             onChange={(e) => {
                               const newCoordinators = [...coordinators]
-                              newCoordinators[index].phone = e.target.value
+                              newCoordinators[index].phone = e.target.value.replace(/\D/g, '')
                               setCoordinators(newCoordinators)
                             }}
                           />
@@ -426,7 +609,7 @@ export default function Component() {
                             value={coordinator.email}
                             onChange={(e) => {
                               const newCoordinators = [...coordinators]
-                              newCoordinators[index].email = e.target.value
+                              newCoordinators[index].email = sanitizeInput(e.target.value)
                               setCoordinators(newCoordinators)
                             }}
                           />
@@ -464,6 +647,7 @@ export default function Component() {
                     )}
                   </CardContent>
                 </Card>
+                {formSubmitted && errors.coordinators && <p className="text-red-500 text-sm mt-1">Please add at least one coordinator with all details</p>}
               </div>
             </div>
           </div>
@@ -472,11 +656,11 @@ export default function Component() {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {eventId ? 'Updating...' : 'Saving...'}
               </>
             ) : (
               <>
-                Save & Proceed <ArrowUpRight className="ml-2 h-4 w-4" />
+                {eventId ? 'Update' : 'Save'} & Proceed <ArrowUpRight className="ml-2 h-4 w-4" />
               </>
             )}
           </Button>

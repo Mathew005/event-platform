@@ -94,7 +94,7 @@ export default function Component() {
   };
 
   const handleCreateEvent = () => {
-    router.push('/create/event')
+    router.push('/dashboard/organizer/create/event')
   }
 
   const togglePublish = (id: string) => {

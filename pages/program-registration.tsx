@@ -1,36 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trash2, Plus, X } from 'lucide-react'
-import { useToast } from "@/components/ui/use-toast"
 import config from '@/config'
-
-
-const ImageFile = 'files/imgs/defaults/events/'
-
-// Mock data for the program
-const programData = {
-  isGroupEvent: false
-  ,image: `${config.api.host}${ImageFile}hackathon.webp?height=300&width=400`,
-  programTitle: "AI & Machine Learning Hackathon",
-  eventTitle: "TechFest 2023",
-  description: "Develop an AI solution for a real-world problem within 36 hours. All code must be original and created during the event.",
-  date: "September 15-16, 2023",
-  fees: 100,
-  minMembers: 2,
-  maxMembers: 4
-}
-
-const countryCodes = [
-  { value: "+91", label: "India (+91)" },
-  { value: "+1", label: "USA (+1)" },
-  { value: "+44", label: "UK (+44)" },
-]
+import axios from 'axios'
+import { useEventContext } from '@/components/contexts/EventContext'
+import { useUserContext } from '@/components/contexts/UserContext'
+import { Toaster, toast } from 'sonner'
 
 interface Member {
   name: string
@@ -39,9 +20,121 @@ interface Member {
   contact: string
 }
 
+const countryCodes = [
+  { value: "+91", label: "India (+91)" },
+  { value: "+1", label: "USA (+1)" },
+  { value: "+44", label: "UK (+44)" },
+]
+
+const sanitizeInput = (input: string) => {
+  return input.replace(/[^a-zA-Z0-9@.\s]/g, '')
+}
+
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: { table, id, columnIdentifier, columnTargets: columnTargets.join(',') }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+const insertData = async (table: string, data: any) => {
+  if (!table || !data) {
+    console.error('Table name and data must be provided')
+    return false
+  }
+
+  try {
+    const response = await axios.post(
+      `${config.api.host}${config.api.routes.set}`,
+      { table, data },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+
+    const result = response.data
+
+    if (result.success) {
+      console.log('Data inserted successfully')
+      return result.insertId
+    } else {
+      console.error(`Failed to insert data: ${result.message}`)
+      return false
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    return false
+  }
+}
+
 export default function ProgramRegistration() {
-  const { toast } = useToast()
   const [members, setMembers] = useState<Member[]>([{ name: '', email: '', countryCode: '+91', contact: '' }])
+  const { eventId, programId, setEventId, setProgramId } = useEventContext()
+  const { userId, setUserId } = useUserContext()
+  const [programData, setProgramData] = useState({
+    isGroupEvent: false,
+    image: '',
+    programTitle: '',
+    eventTitle: '',
+    description: '',
+    date: '',
+    fees: 0,
+    minMembers: 1,
+    maxMembers: 1
+  })
+  const [errors, setErrors] = useState<{ [key: string]: boolean }>({})
+
+  useEffect(() => {
+    setUserId('2')
+    setProgramId('3')
+    setEventId('1')
+  }, [])
+
+  useEffect(() => {
+    fetchEventData()
+    fetchProgramData()
+  }, [programId, eventId])
+
+  const fetchProgramData = async () => {
+    if(programId){
+      const data = await fetchData('Programs', programId, 'PID', ['PName', 'PTime', 'PLocation', 'PType', 'PImage', 'PStartDate', 'PEndDate', 'PDecription', 'Fee', 'Min', 'Max'])
+      if (data) {
+        console.log(data)
+        const startDate = new Date(data.PStartDate)
+        const endDate = new Date(data.PEndDate)
+        const formattedDate = startDate.toDateString() === endDate.toDateString() 
+          ? startDate.toLocaleDateString() 
+          : `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+        
+        setProgramData({
+          isGroupEvent: data.Min > 1,
+          image: `${config.api.host}${data.PImage}?height=300&width=400`,
+          programTitle: data.PName,
+          eventTitle: programData.eventTitle, // We'll update this separately
+          description: data.PDecription,
+          date: formattedDate,
+          fees: data.Fee,
+          minMembers: data.Min,
+          maxMembers: data.Max
+        })
+      }
+    }
+  }
+
+  const fetchEventData = async () => {
+    if(eventId){
+      const data = await fetchData('Events', eventId, 'EID', ['EName'])
+      if (data) {
+        setProgramData(prevData => ({
+          ...prevData,
+          eventTitle: data.EName
+        }))
+      }
+    }
+  }
 
   const handleAddMember = () => {
     if (members.length < programData.maxMembers) {
@@ -59,33 +152,43 @@ export default function ProgramRegistration() {
 
   const handleMemberChange = (index: number, field: keyof Member, value: string) => {
     const newMembers = [...members]
-    newMembers[index][field] = value
+    if (field === 'name' || field === 'email') {
+      newMembers[index][field] = sanitizeInput(value)
+    } else if (field === 'contact') {
+      newMembers[index][field] = value.replace(/[^0-9]/g, '')
+    } else {
+      newMembers[index][field] = value
+    }
     setMembers(newMembers)
   }
 
-  const isFormValid = () => {
-    const requiredMembers = programData.isGroupEvent ? programData.minMembers : 1
-    return members.length >= requiredMembers && members.slice(0, requiredMembers).every(member => 
-      member.name && member.email && member.contact
-    )
+  const validateForm = () => {
+    const newErrors: { [key: string]: boolean } = {}
+    members.forEach((member, index) => {
+      if (!member.name) newErrors[`name-${index}`] = true
+      if (!member.email) newErrors[`email-${index}`] = true
+      if (!member.contact) newErrors[`contact-${index}`] = true
+    })
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isFormValid()) {
+    if (validateForm()) {
       const options = {
         key: 'rzp_test_74JvhBshSMhVVm',
         amount: programData.fees * 100,
         currency: 'INR',
         name: programData.eventTitle,
         description: programData.programTitle,
-        handler: function (response: any) {
+        handler: async function (response: any) {
           console.log('Payment successful:', response)
-          toast({
-            title: "Registration Successful",
+          await saveRegistration()
+          toast.success("Registration Successful", {
+            duration: 5000,
             description: "Payment successful, thank you!",
           })
-          // Further processing can be done here (e.g., storing registration in the database)
         },
         prefill: {
           name: members[0].name,
@@ -100,20 +203,44 @@ export default function ProgramRegistration() {
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } else {
-      toast({
-        title: "Invalid Form",
-        description: `Please fill in details for at least ${programData.isGroupEvent ? programData.minMembers : 1} member(s).`,
-        variant: "destructive",
-      })
+      toast.error(`Please fill in all required fields for ${programData.isGroupEvent ? programData.minMembers : 1} member(s).`)
     }
   }
 
-  const fillFromProfile = () => {
-    const profileData = { name: 'John Doe', email: 'john@example.com', countryCode: '+91', contact: '1234567890' }
-    setMembers([profileData, ...members.slice(1)])
+  const saveRegistration = async () => {
+    const registrationData = {
+      EID: eventId,
+      PID: programId,
+      ParticipantName: members[0].name,
+      ParticipantEmail: members[0].email,
+      ParticipantPhone: `${members[0].countryCode}${members[0].contact}`,
+      AdditionParticipantNames: members.slice(1).map(m => m.name).join(', '),
+      AdditionParticipantEmail: members.slice(1).map(m => m.email).join(', '),
+      AdditionParticipantPhone: members.slice(1).map(m => `${m.countryCode}${m.contact}`).join(', ')
+    }
+
+    const result = await insertData('Registrations', registrationData)
+    if (result) {
+      console.log('Registration saved successfully')
+    } else {
+      console.error('Failed to save registration')
+    }
   }
 
-  React.useEffect(() => {
+  const fillFromProfile = async () => {
+    const userData = await fetchData('Participants', userId, 'PID', ['PName', 'PEmail', 'PPhone', 'PCode'])
+    if (userData) {
+      const profileData = { 
+        name: userData.PName, 
+        email: userData.PEmail, 
+        countryCode: userData.PCode,
+        contact: userData.PPhone
+      }
+      setMembers([profileData, ...members.slice(1)])
+    }
+  }
+
+  useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
@@ -125,6 +252,7 @@ export default function ProgramRegistration() {
 
   return (
     <div className="fixed inset-0 bg-gray-100 overflow-y-auto">
+      <Toaster richColors/>
       <div className="relative max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
         <Card className="w-full">
           <CardHeader>
@@ -150,9 +278,12 @@ export default function ProgramRegistration() {
               <p className="text-gray-600">{programData.eventTitle}</p>
               <p className="mt-2">{programData.description}</p>
               <p className="mt-2">Date: {programData.date}</p>
-              <p>Registration Fee: ${programData.fees}</p>
+              <p>Registration Fee: ₹{programData.fees}</p>
               {programData.isGroupEvent && (
-                <p>Team Size: {programData.minMembers} - {programData.maxMembers} members</p>
+                <p>Team Size: {programData.minMembers === programData.maxMembers 
+                  ? `${programData.minMembers} members` 
+                  : `${programData.minMembers} - ${programData.maxMembers} members`}
+                </p>
               )}
             </div>
 
@@ -175,7 +306,7 @@ export default function ProgramRegistration() {
                           id={`name-${index}`}
                           value={member.name}
                           onChange={(e) => handleMemberChange(index, 'name', e.target.value)}
-                          required
+                          className={errors[`name-${index}`] ? 'border-red-500' : ''}
                         />
                       </div>
                       <div>
@@ -185,7 +316,7 @@ export default function ProgramRegistration() {
                           type="email"
                           value={member.email}
                           onChange={(e) => handleMemberChange(index, 'email', e.target.value)}
-                          required
+                          className={errors[`email-${index}`] ? 'border-red-500' : ''}
                         />
                       </div>
                       <div className="sm:col-span-2">
@@ -210,8 +341,7 @@ export default function ProgramRegistration() {
                             id={`contact-${index}`}
                             value={member.contact}
                             onChange={(e) => handleMemberChange(index, 'contact', e.target.value)}
-                            className="flex-1"
-                            required
+                            className={`flex-1 ${errors[`contact-${index}`] ? 'border-red-500' : ''}`}
                           />
                         </div>
                       </div>
@@ -233,7 +363,7 @@ export default function ProgramRegistration() {
 
               {programData.isGroupEvent && members.length < programData.maxMembers && (
                 <Button type="button" variant="outline" onClick={handleAddMember}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Member
+                  <Plus className="mr-2 h-4  w-4" /> Add Member
                 </Button>
               )}
 
