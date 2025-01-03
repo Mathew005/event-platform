@@ -12,6 +12,7 @@ import axios from 'axios'
 import { useEventContext } from '@/components/contexts/EventContext'
 import { useUserContext } from '@/components/contexts/UserContext'
 import { Toaster, toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface Member {
   name: string
@@ -86,21 +87,20 @@ export default function ProgramRegistration() {
     maxMembers: 1
   })
   const [errors, setErrors] = useState<{ [key: string]: boolean }>({})
+  const router = useRouter()
 
   useEffect(() => {
-    setUserId('2')
+    setUserId('1')
     setProgramId('3')
-    setEventId('1')
   }, [])
 
   useEffect(() => {
-    fetchEventData()
     fetchProgramData()
-  }, [programId, eventId])
+  }, [programId])
 
   const fetchProgramData = async () => {
     if(programId){
-      const data = await fetchData('Programs', programId, 'PID', ['PName', 'PTime', 'PLocation', 'PType', 'PImage', 'PStartDate', 'PEndDate', 'PDecription', 'Fee', 'Min', 'Max'])
+      const data = await fetchData('Programs', programId, 'PID', ['PName', 'EID' ,'PTime', 'PLocation', 'PType', 'PImage', 'PStartDate', 'PEndDate', 'PDecription', 'Fee', 'Min', 'Max'])
       if (data) {
         console.log(data)
         const startDate = new Date(data.PStartDate)
@@ -109,32 +109,32 @@ export default function ProgramRegistration() {
           ? startDate.toLocaleDateString() 
           : `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
         
-        setProgramData({
-          isGroupEvent: data.Min > 1,
-          image: `${config.api.host}${data.PImage}?height=300&width=400`,
-          programTitle: data.PName,
-          eventTitle: programData.eventTitle, // We'll update this separately
-          description: data.PDecription,
-          date: formattedDate,
-          fees: data.Fee,
-          minMembers: data.Min,
-          maxMembers: data.Max
-        })
-      }
+          // console.log(programData.EID)
+
+          if(data.EID){
+            setEventId(data.EID)
+            const eventData = await fetchData('Events', data.EID, 'EID', ['EName'])
+            // console.log(eventData)
+            if (eventData) {
+              setProgramData({
+                isGroupEvent: data.Min > 1,
+                image: `${config.api.host}${data.PImage}?height=300&width=400`,
+                programTitle: data.PName,
+                eventTitle: eventData.EName, // We'll update this separately
+                description: data.PDecription,
+                date: formattedDate,
+                fees: data.Fee,
+                minMembers: data.Min,
+                maxMembers: data.Max
+              })
+            }
+            }
+          }
+
+        
     }
   }
 
-  const fetchEventData = async () => {
-    if(eventId){
-      const data = await fetchData('Events', eventId, 'EID', ['EName'])
-      if (data) {
-        setProgramData(prevData => ({
-          ...prevData,
-          eventTitle: data.EName
-        }))
-      }
-    }
-  }
 
   const handleAddMember = () => {
     if (members.length < programData.maxMembers) {
@@ -180,7 +180,8 @@ export default function ProgramRegistration() {
         key: 'rzp_test_74JvhBshSMhVVm',
         amount: programData.fees * 100,
         currency: 'INR',
-        name: programData.eventTitle,
+        name: members[0].name,
+        email:members[0].email,
         description: programData.programTitle,
         handler: async function (response: any) {
           console.log('Payment successful:', response)
@@ -199,8 +200,10 @@ export default function ProgramRegistration() {
           color: "#ffffff",
         },
       };
+      console.log(options)
 
       const rzp = new (window as any).Razorpay(options);
+      console.log(rzp)
       rzp.open();
     } else {
       toast.error(`Please fill in all required fields for ${programData.isGroupEvent ? programData.minMembers : 1} member(s).`)
@@ -250,6 +253,11 @@ export default function ProgramRegistration() {
     };
   }, []);
 
+  
+  const onClose = () => {
+    router.push('/event')
+  }
+
   return (
     <div className="fixed inset-0 bg-gray-100 overflow-y-auto">
       <Toaster richColors/>
@@ -264,7 +272,7 @@ export default function ProgramRegistration() {
                 variant="outline"
                 size="icon"
                 className="text-muted-foreground"
-                onClick={() => {}}
+                onClick={() => {onClose()}}
               >
                 <X className="h-6 w-6" />
                 <span className="sr-only">Close</span>
