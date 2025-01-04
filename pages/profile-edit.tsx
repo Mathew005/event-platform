@@ -54,12 +54,12 @@ const defaultAvatars = [
 
 const interestCategories = {
   "Technology": ["Coding", "Web Design", "AI", "Cybersec", "Blockchain", "Data", "Cloud", "IoT", "AR/VR"],
-  "Culture": ["Art", "Music", "Dance", "Books", "Langs", "Film", "Theater", "Food Traditions", "Heritage"],
-  "Commerce": ["Marketing", "Finance", "Startups", "E-commerce", "Supply Chain", "Social Biz"],
+  "Culture": ["Art", "Music", "Dance", "Books", "Langs", "Film", "Theater", "Food Traditions", "Cultural Heritage"],
+  "Commerce": ["Marketing", "Finance", "Startups", "E-Commerce", "Supply Chain", "Social Biz"],
   "Science": ["Physics", "Chem", "Bio", "Space", "Enviro Science", "Psych", "Genetics", "Geology"],
   "Sports": ["Soccer", "Basketball", "Tennis", "Swim", "Yoga", "Running", "Martial Arts", "Extreme Sports"],
-  "Lifestyle": ["Fashion", "Cooking", "Travel", "Photo", "Fitness", "Home Decor", "Gardening", "Mindfulness"],
-  "Health": ["Mental Health", "Nutrition", "Holistic", "Meditation", "Wellness", "Fitness Trends"],
+  "Lifestyle": ["Fashion", "Cooking", "Travel", "Photo", "Fitness Trends", "Home Decor", "Gardening", "Mindfulness"],
+  "Health": ["Mental Health", "Nutrition", "Holistic", "Meditation", "Wellness", "Fitness"], 
   "Environment": ["Renewables", "Conservation", "Urban Garden", "Eco Living", "Waste Reduction", "Sustainable Fashion"],
   "Education": ["Workshops", "Lifelong Learning", "STEM", "Languages", "Online Courses", "Skills"],
   "Social": ["Service", "Activism", "Nonprofit", "Social Justice", "Volunteering", "Civic Duty"],
@@ -68,7 +68,7 @@ const interestCategories = {
   "Travel": ["Adventure", "Cultural Exchange", "Travel Photo", "Eco Tourism", "Road Trips", "Backpacking"],
   "Crafts": ["Handmade", "DIY", "Upcycling", "Markets", "Craft Fairs", "Sewing"],
   "Film": ["Documentaries", "Filmmaking", "Animation", "Storytelling", "Film Fests", "Podcasting"],
-  "History": ["Heritage", "Reenactments", "Genealogy", "Local History", "Preservation", "Archaeology"],
+  "History": ["Reenactments", "Genealogy", "Local History", "Preservation", "Archaeology"],
   "Themes": ["Innovation", "Cultures", "Future Work", "Digital Nomads", "Diversity", "Nature", "Art-Tech Fusion", "Tradition", "Mindfulness", "Local Talent"]
 }
 

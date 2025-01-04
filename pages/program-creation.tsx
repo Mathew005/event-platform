@@ -182,7 +182,7 @@ export default function ProgramCreation() {
 
 
   useEffect(() => {
-    // setEventId('1')
+    setEventId('7')
     // setProgramId('4')
   }, [])
 

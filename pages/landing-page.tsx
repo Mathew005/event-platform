@@ -41,12 +41,12 @@ const districts = {
 
 const categoriesAndSubs = {
   "technology": ["coding", "web design", "ai", "cybersec", "blockchain", "data", "cloud", "iot", "ar/vr"],
-  "culture": ["art", "music", "dance", "books", "langs", "film", "theater", "food traditions", "heritage"],
+  "culture": ["art", "music", "dance", "books", "langs", "film", "theater", "food traditions", "cultural heritage"],
   "commerce": ["marketing", "finance", "startups", "e-commerce", "supply chain", "social biz"],
   "science": ["physics", "chem", "bio", "space", "enviro science", "psych", "genetics", "geology"],
   "sports": ["soccer", "basketball", "tennis", "swim", "yoga", "running", "martial arts", "extreme sports"],
-  "lifestyle": ["fashion", "cooking", "travel", "photo", "fitness", "home decor", "gardening", "mindfulness"],
-  "health": ["mental health", "nutrition", "holistic", "meditation", "wellness", "fitness trends"],
+  "lifestyle": ["fashion", "cooking", "travel", "photo", "fitness trends", "home decor", "gardening", "mindfulness"],
+  "health": ["mental health", "nutrition", "holistic", "meditation", "wellness", "fitness"],
   "environment": ["renewables", "conservation", "urban garden", "eco living", "waste reduction", "sustainable fashion"],
   "education": ["workshops", "lifelong learning", "stem", "languages", "online courses", "skills"],
   "social": ["service", "activism", "nonprofit", "social justice", "volunteering", "civic duty"],
@@ -55,11 +55,12 @@ const categoriesAndSubs = {
   "travel": ["adventure", "cultural exchange", "travel photo", "eco tourism", "road trips", "backpacking"],
   "crafts": ["handmade", "diy", "upcycling", "markets", "craft fairs", "sewing"],
   "film": ["documentaries", "filmmaking", "animation", "storytelling", "film fests", "podcasting"],
-  "history": ["heritage", "reenactments", "genealogy", "local history", "preservation", "archaeology"],
+  "history": ["reenactments", "genealogy", "local history", "preservation", "archaeology"],
   "themes": ["innovation", "cultures", "future work", "digital nomads", "diversity", "nature", "art-tech fusion", "tradition", "mindfulness", "local talent"]
 }
 
-const eventsAndPrograms = [
+
+const eventsAndProgram = [
   { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-15", time: "2:00 PM", location: "thiruvananthapuram", categories: ["culture", "music"], institute: "Kerala Music Institute" },
   { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}tech_confernce.jpg`, date: "2024-08-22", time: "9:00 AM", location: "palakkad", categories: ["technology", "education"], institute: "Tech Innovators Association" },
   { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}wine_tasting.jpg`, date: "2024-09-10", time: "11:00 AM", location: "kozhikode", categories: ["food", "culture"], institute: "Culinary Arts Foundation" },
@@ -86,12 +87,10 @@ const fetchData = async (table: string, id: string, columnIdentifier: string, co
   }
 }
 
-const getData = async (table: string, columns: string[]) => {
+const getData = async () => {
   try {
-    const columnString = columns.join(',');
-    const response = await axios.get(`${config.api.host}${config.api.routes.get}`, {
-      params: { table, columns: columnString }
-    });
+    const response = await axios.get(`${config.api.host}${config.api.routes.landing}`);
+    // console.log(response.data)
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -122,11 +121,25 @@ export default function Component() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const slideIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [avatar, setAvatar] = useState("")
+  const [eventsAndPrograms, setEventsAndPrograms] = useState(
+    eventsAndProgram
+  );
+  const [eventLength, setEventLength] = useState(0)
 
   useEffect(() => {
-    setUserId('1')
-    setUsertype('participant')
+    // setUserId('1')
+    // setUsertype('participant')
   }, [])
+
+  useEffect(() => {
+    const fetchEventAndPrograms = async () => {
+        const data = await getData();
+        setEventsAndPrograms(data);
+        setEventLength(data.filter(item => item.type === 'event').length)
+    };
+  
+    fetchEventAndPrograms();
+  }, []);
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -150,15 +163,15 @@ export default function Component() {
 
   const nextSlide = () => {
     setCurrentSlide((prev) => 
-      (prev + 1) % eventsAndPrograms.filter(item => item.type === 'event').length
+      (prev + 1) % eventLength
     );
     resetTimer(8000); 
   };
 
   const prevSlide = () => {
     setCurrentSlide((prev) => 
-      (prev - 1 + eventsAndPrograms.filter(item => item.type === 'event').length) % 
-      eventsAndPrograms.filter(item => item.type === 'event').length
+      (prev - 1 + eventLength) % 
+    eventLength
     );
     resetTimer(8000);
   };
@@ -208,9 +221,12 @@ export default function Component() {
   const handleCardClick = (item: any) => {
     if (item.type === 'event') {
       console.log('Event clicked:', item.id);
+      setEventId(item.id)
       // Add your event handling logic here
     } else {
-      console.log('Program clicked:', item.id);
+      console.log('Event clicked:', item.eventId, 'Program clicked:', item.id);
+      setProgramId(item.id)
+      setEventId(item.eventId)
       // Add your program handling logic here
     }
   };
@@ -292,6 +308,7 @@ export default function Component() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20">
         <section className="mb-12 relative">
           <h2 className="text-2xl font-bold mb-4">Featured Events</h2>
+          {eventsAndPrograms.filter(item => item.type === 'event').length > 0 ? (
           <div className="overflow-hidden rounded-lg">
             <div
               ref={carouselRef}
@@ -331,6 +348,9 @@ export default function Component() {
               ))}
             </div>
           </div>
+          ):(
+            <p>No featured events available at the moment.</p>)
+          }
           <Button
             variant="outline"
             className="absolute left-4 top-1/2 transform -translate-y-1/2"
@@ -457,6 +477,8 @@ export default function Component() {
               </div>
             </div>
           </div>
+
+          {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems.map((item) => (
               <Card key={`${item.type}-${item.id}`} className="transition-transform">
@@ -510,6 +532,9 @@ export default function Component() {
               </Card>
             ))}
           </div>
+          ) : (
+          <p>No events or programs match your current filters.</p>
+        )}
         </section>
       </main>
     </div>

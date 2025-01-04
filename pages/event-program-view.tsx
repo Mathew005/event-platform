@@ -4,6 +4,11 @@ import React, { useState, useRef, useEffect } from 'react'
 import { X, MapPin, ExternalLink, Download, Phone, Mail, Bookmark } from 'lucide-react'
 import Link from 'next/link'
 import config from '@/config'
+import { useEventContext } from '@/components/contexts/EventContext'
+import { Toaster,toast} from 'sonner'
+import { useUserContext } from '@/components/contexts/UserContext'
+import axios from 'axios'
+import { register } from 'module'
 
 interface Coordinator {
   name: string
@@ -29,6 +34,7 @@ interface Program {
 }
 
 interface Event {
+  id: string
   name: string
   institution: string
   category: string
@@ -44,7 +50,8 @@ interface Event {
 
 const ImageFile = 'files/imgs/defaults/events/'
 
-const event: Event = {
+const eventbase: Event = {
+  id:"1",
   name: "TechFest 2023",
   institution: "Global Tech University",
   category: "Technology & Innovation",
@@ -148,11 +155,104 @@ const event: Event = {
   ]
 }
 
+const setBookMark = async (userId: string, type: string, action: string, bookMarkId: string) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.bookmark}`, {
+      params: { userId, type, action, bookMarkId}
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error saving bookmarks data:', error)
+    return null
+  }
+}
+
+
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: { table, id, columnIdentifier, columnTargets: columnTargets.join(',') }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+const getEventProgramData = async (id: string) => {
+  try{
+    const response = await axios.get(`${config.api.host}${config.api.routes.event_program_view}`,{
+      params:{id}
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
 export default function Component() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
   const [bookmarkedPrograms, setBookmarkedPrograms] = useState<Set<string>>(new Set())
   const [isEventBookmarked, setIsEventBookmarked] = useState(false)
   const selectedProgramRef = useRef<HTMLDivElement>(null)
+  const {setEventId, setProgramId, programId, eventId} = useEventContext();
+  const {setUserId, setUsertype, userId, usertype} = useUserContext();
+  const [event, setEvent] = useState<Event>(eventbase);
+  const [orgwebsite, setOrgWebsite] = useState("");
+
+  useEffect(() => {
+    setEventId('7')
+    setUserId('1')
+    setUsertype('participant')
+  }, [])
+  
+  useEffect(() => {
+    const fillEventData = async () =>{
+      if(eventId){
+        const data = await getEventProgramData(eventId)
+        console.log(data)
+        setOrgWebsite(data.organizer.website)
+        setEvent(data);
+      }
+    }
+
+    fillEventData()
+  }, [eventId])
+
+
+  useEffect(() => {
+    const updateBookmarks = async () => {
+      // Check event bookmark status
+      const eventBookmarkStatus = await setBookMark(userId, "event", "check", eventId);
+      if (eventBookmarkStatus?.success) {
+        setIsEventBookmarked(eventBookmarkStatus.isBookmarked);
+        // console.log(eventBookmarkStatus.isBookmarked)
+      }
+
+      const newBookmarks = new Set<string>()
+      // Check programs bookmark status
+      await Promise.all(
+        event.programs.map(async (program) => {
+          const programBookmarkStatus = await setBookMark(userId, "program", "check", program.id);
+          if (programBookmarkStatus?.success) {
+            if(programBookmarkStatus.isBookmarked){
+              newBookmarks.add(program.id)
+            }
+          }
+        })
+      );
+      // console.log(newBookmarks)
+      setBookmarkedPrograms(newBookmarks);
+
+      // Update state
+    };
+
+    updateBookmarks();
+  }, [userId]);
+
+
 
   // Toggle this variable to enable/disable auto-scrolling
   const enableAutoScroll = true
@@ -167,15 +267,20 @@ export default function Component() {
       const newBookmarks = new Set(prevBookmarks)
       if (newBookmarks.has(programId)) {
         newBookmarks.delete(programId)
+        setBookMark(userId, "program", "remove", programId)
       } else {
         newBookmarks.add(programId)
+        setBookMark(userId, "program", "add", programId)
       }
+      console.log(newBookmarks)
       return newBookmarks
     })
   }
 
   const toggleEventBookmark = () => {
     setIsEventBookmarked(prev => !prev)
+    console.log(!isEventBookmarked)
+    setBookMark(userId, "event", !isEventBookmarked ? "add": "remove", eventId)
   }
 
   useEffect(() => {
@@ -184,13 +289,31 @@ export default function Component() {
     }
   }, [selectedProgram])
 
+  const handleRegister = (programId: string) => {
+    if(!userId){
+      toast.error("Please Log In In Order To Register")
+      return
+    }
+    const checkFullProfile = async () => {
+      const data = await fetchData("participants", userId, "PID", ["PInstitute"])
+      if(!data.PInstitute){
+        toast.error("Plese Complete You Profile In Order To Register")
+        return
+      }
+    }
+    checkFullProfile()
+    console.log(programId)
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
+      <Toaster richColors />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white shadow-xl rounded-lg overflow-hidden">
           <div className="p-6 bg-white text-black flex justify-between items-center border-b">
             <h1 className="text-2xl font-bold">Program Details</h1>
             <div className="flex items-center space-x-4">
+              { usertype == 'participant' &&
               <button
                 onClick={toggleEventBookmark}
                 className={`p-2 rounded-full ${isEventBookmarked ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600'} hover:bg-yellow-200 transition-colors`}
@@ -198,6 +321,7 @@ export default function Component() {
               >
                 <Bookmark size={20} className={isEventBookmarked ? "fill-current" : ""} />
               </button>
+              }
               <Link href="/" className="text-black hover:text-gray-600">
                 <X size={24} />
                 <span className="sr-only">Close</span>
@@ -214,7 +338,14 @@ export default function Component() {
               />
               <div>
                 <h2 className="text-3xl font-bold mb-2">{event.name}</h2>
-                <p className="text-xl font-bold text-blue-600 mb-2">{event.institution}</p>
+                <a
+                    href={orgwebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-blue-600 hover:text-blue-800"
+                  >
+                    <p className="text-xl font-bold text-blue-600 mb-2">{event.institution}</p>
+                </a>
                 <p className="text-lg text-gray-600 mb-4">{event.category}</p>
                 <div className="flex items-center text-gray-600 mb-2">
                   <MapPin className="mr-2" /> {event.location}
@@ -288,12 +419,13 @@ export default function Component() {
                       </p>
                     </div>
                   </div>
-                  <button 
+                  {usertype == 'participant' &&
+                  <button onClick={() => handleRegister(selectedProgram.id)}
                     className="w-full mt-4 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
                     disabled={!selectedProgram.registrationOpen}
                   >
                     Register Now
-                  </button>
+                  </button>}
                 </div>
 
                 <div className="mt-8">
@@ -326,6 +458,7 @@ export default function Component() {
                         alt={program.name}
                         className="w-full h-32 object-cover rounded-lg mb-2"
                       />
+                      {usertype == 'participant' &&
                       <button
                         onClick={(e) => toggleProgramBookmark(program.id, e)}
                         className={`absolute top-2 right-2 p-2 rounded-full ${bookmarkedPrograms.has(program.id) ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600'} hover:bg-yellow-200 transition-colors`}
@@ -333,6 +466,7 @@ export default function Component() {
                       >
                         <Bookmark size={16} className={bookmarkedPrograms.has(program.id) ? "fill-current" : ""} />
                       </button>
+                      }
                     </div>
                     <h3 className="font-semibold mb-1">{program.name}</h3>
                     <p className="text-sm text-gray-600">{program.date}</p>

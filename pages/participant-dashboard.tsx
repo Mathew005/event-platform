@@ -419,7 +419,7 @@ function ProgramCard({ program, openDialog}: { program: Program; openDialog: (pr
 }
 
 function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: Event | Program; isEvent: boolean; onUnbookmark: () => void; onViewDetails: () => void }) {
-  const isExpired = new Date(item.date) < new Date('2024-10-02')
+  const isExpired = new Date(item.date) < new Date()
 
   return (
     <div className={`bg-white rounded-lg shadow overflow-hidden ${isExpired ? 'opacity-50' : ''}`}>
@@ -451,7 +451,7 @@ function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: Ev
 function ProgramStatus({ date }: { date: string }) {
   const programDate = new Date(date)
   programDate.setHours(0, 0, 0, 0)
-  const today = new Date('2024-10-02')
+  const today = new Date()
   today.setHours(0, 0, 0, 0)
   const diffTime = programDate.getTime() - today.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))

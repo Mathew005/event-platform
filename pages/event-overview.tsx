@@ -1,25 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Edit, 
-  Grid, 
-  List, 
-  Plus,
-  Clock,
-  DollarSign,
-  X,
-  Eye,
-  Download,
-  Trash2
-} from 'lucide-react'
+import { Calendar, MapPin, Users, Edit, Grid, List, Plus, Clock, DollarSign, X, Eye, Download, Trash2 } from 'lucide-react'
 import { Toggle } from "@/components/ui/toggle"
+import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
   DialogContent,
@@ -42,6 +29,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import config from '@/config'
 import { useRouter } from 'next/navigation'
+import axios from 'axios'
+import { useEventContext } from '@/components/contexts/EventContext'
+import { useUserContext } from '@/components/contexts/UserContext'
 
 type Coordinator = {
   name: string;
@@ -65,6 +55,7 @@ type Program = {
   minParticipants?: number;
   maxParticipants?: number;
   coordinators: Coordinator[];
+  status: 'open' | 'closed';
 }
 
 type Event = {
@@ -83,7 +74,7 @@ type Event = {
 
 const ImageFile = 'files/imgs/defaults/events/'
 
-const event: Event = {
+const eventbase: Event = {
   id: '1',
   title: 'Tech Innovation Summit 2023',
   description: 'Join us for a day of cutting-edge technology discussions and networking opportunities with industry leaders.',
@@ -97,7 +88,7 @@ const event: Event = {
   ],
   programs: [
     {
-      id: 'p1',
+      id: '1',
       name: 'AI in Healthcare',
       type: 'Workshop',
       date: '2023-09-15',
@@ -111,9 +102,10 @@ const event: Event = {
       coordinators: [
         { name: 'Dr. Alice Johnson', role: 'AI Specialist', email: 'alice@example.com', phone: '+1 111-222-3333' },
       ],
+      status: 'open',
     },
     {
-      id: 'p2',
+      id: '2',
       name: 'Future of Blockchain',
       type: 'Panel Discussion',
       date: '2023-09-15',
@@ -127,9 +119,10 @@ const event: Event = {
       coordinators: [
         { name: 'Bob Smith', role: 'Blockchain Expert', email: 'bob@example.com', phone: '+1 444-555-6666' },
       ],
+      status: 'open',
     },
     {
-      id: 'p3',
+      id: '3',
       name: 'Cybersecurity Challenge',
       type: 'Team Competition',
       date: '2023-09-15',
@@ -145,16 +138,130 @@ const event: Event = {
       coordinators: [
         { name: 'Charlie Brown', role: 'Security Expert', email: 'charlie@example.com', phone: '+1 777-888-9999' },
       ],
+      status: 'open',
     },
   ],
   status: 'scheduled',
   view: 'staged',
 }
 
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: { table, id, columnIdentifier, columnTargets: columnTargets.join(',') }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+const deleteData = async (table: string, id: string, column: string) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.delete}`, {
+      params: { table, id, column}
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+const getEventOverviewData = async (id: string) => {
+  try{
+    const response = await axios.get(`${config.api.host}${config.api.routes.event_overview}`,{
+      params:{id}
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
+
+
+const saveData = async (
+  table: string,
+  identifier: string,
+  identifierColumn: string,
+  target: string,
+  data: any
+) => {
+  if (data === undefined || data === null) {
+    console.error(`Attempted to update ${target} with undefined or null value`)
+    return false
+  }
+
+  try {
+    const response = await axios.post(
+      `${config.api.host}${config.api.routes.save_fetch}`,
+      { table, identifier, identifierColumn, target, data },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+
+    const result = response.data
+
+    if (result.success) {
+      console.log(`Successfully updated ${target}`)
+      return true
+    } else {
+      console.error(`Failed to update ${target}: ${result.message}`)
+      return false
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    return false
+  }
+}
+
 export default function EventOverview() {
   const [isGridView, setIsGridView] = useState(true)
-  const [currentEvent, setCurrentEvent] = useState<Event>(event)
+  const [currentEvent, setCurrentEvent] = useState<Event>(eventbase)
+  const { eventId, programId, setEventId, setProgramId } = useEventContext();
+  const {userId, usertype, setUserId, setUsertype} = useUserContext();
   const router = useRouter()
+
+
+  useEffect(() => {
+    setUserId('1')
+    setEventId('7')
+    // setUsertype('participant')
+}, [])
+
+useEffect(() =>{
+  const getEventData = async () => {
+    if (eventId){
+      const data = await getEventOverviewData(eventId)
+      setCurrentEvent(data)
+    }
+  }
+
+  getEventData()
+},[eventId])
+
+useEffect(() => {
+  if(eventId){
+    const fetchStatus = async () =>{
+      const data = await fetchData("events", eventId, "EID", ["Published"])
+      if(data.Published == '0'){
+        setCurrentEvent(prev => ({ ...prev, view: 'staged' }))
+      }
+      if(data.Published == '1'){
+        setCurrentEvent(prev => ({ ...prev, view: 'published' }))
+      }
+
+      currentEvent.programs.map(async (program)=>{
+        const pstatus = await fetchData("programs", program.id, "PID", ["Open"])
+        program.status = pstatus.Open == 1 ? 'open' : "closed";
+        // console.log(program.id, program.status, pstatus.Open)
+      })
+    }
+  
+    fetchStatus()
+  }
+}, [eventId])
 
   const handleClose = () => {
     router.push('/dashboard/organizer')
@@ -162,22 +269,68 @@ export default function EventOverview() {
 
   const handlePublish = () => {
     setCurrentEvent(prev => ({ ...prev, view: 'published' }))
+    const request = async () =>{
+      await saveData("events", currentEvent.id, "EID","Published", "1")
+    } 
+
+    request()
   }
 
   const handleUnpublish = () => {
     setCurrentEvent(prev => ({ ...prev, view: 'staged' }))
+    const request = async () =>{
+      await saveData("events", currentEvent.id, "EID","Published", "0")
+    } 
+
+    request()
   }
 
   const handleCancel = () => {
     setCurrentEvent(prev => ({ ...prev, status: 'cancelled' }))
+    const request = async () =>{
+      await saveData("events", eventId, "EID","Cancelled", "1")
+    } 
+
+    request()
   }
 
   const handleRemoveProgram = (programId: string) => {
+    const deleteProgram = async () => {
+      await deleteData("programs", programId, "PID")
+    }
+    deleteProgram();
     setCurrentEvent(prev => ({
       ...prev,
       programs: prev.programs.filter(program => program.id !== programId)
     }))
   }
+
+  const toggleProgramStatus = (programId: string) => {
+    setCurrentEvent(prev => ({
+      ...prev,
+      programs: prev.programs.map(program => 
+        program.id === programId 
+          ? { ...program, status: program.status === 'open' ? 'closed' : 'open' }
+          : program
+      )
+    }));
+    currentEvent.programs.map(program =>{
+      if(program.id == programId)
+        if(program.status == 'open'){
+          const status = async () => {
+            await saveData("programs", programId, "PID", "Open", 0)
+          }
+          status()
+          // console.log("send closed")
+        }else{
+          const status = async () => {
+            await saveData("programs", programId, "PID", "Open", 1)
+          }
+          status()
+          // console.log("send open")
+        }
+    })
+  };
 
   const getStatusColor = (status: Event['status']) => {
     switch (status) {
@@ -219,7 +372,6 @@ export default function EventOverview() {
               {currentEvent.status.charAt(0).toUpperCase() + currentEvent.status.slice(1)}
             </span>
             {currentEvent.status !== 'cancelled' && (
-              
               <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-500 text-white bg-opacity-20">
                 {currentEvent.view.charAt(0).toUpperCase() + currentEvent.view.slice(1)}
               </span>
@@ -310,27 +462,37 @@ export default function EventOverview() {
               <div className={isGridView ? "" : "flex-grow"}>
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-semibold">{program.name}</h3>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to remove this program?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the program from the event.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleRemoveProgram(program.id)}>
-                          Remove
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-sm font-medium ${program.status === 'open' ? 'text-green-600' : 'text-red-600'}`}>
+                      {program.status === 'open' ? 'Open' : 'Closed'}
+                    </span>
+                    <Switch
+                      checked={program.status === 'open'}
+                      onCheckedChange={() => toggleProgramStatus(program.id)}
+                      className={program.status === 'open' ? 'bg-green-600' : 'bg-red-600'}
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure you want to remove this program?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the program from the event.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleRemoveProgram(program.id)}>
+                            Remove
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
                   <div className="flex items-center">
@@ -449,3 +611,4 @@ export default function EventOverview() {
     </div>
   )
 }
+
