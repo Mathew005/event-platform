@@ -182,7 +182,7 @@ export default function ProgramCreation() {
 
 
   useEffect(() => {
-    setEventId('7')
+    // setEventId('7')
     // setProgramId('4')
   }, [])
 
@@ -311,7 +311,8 @@ export default function ProgramCreation() {
         console.log(selectedTime)
         return hour && minute && ampm ? '' : 'Time is required'
       case 'rulesFile':
-        return uploadedFileUrl ? '' : 'Rules and regulations file is required'
+        // return uploadedFileUrl ? '' : 'Rules and regulations file is required'
+        return uploadedFileUrl ? '' : ''
       case 'rulesFile':
         return value ? '' : 'Rules and regulations file is required'
       case 'rulesRegulations':
@@ -779,7 +780,7 @@ export default function ProgramCreation() {
                   rows={4}
                   className={errors.rulesRegulations ? "border-red-500" : ""}
                 />
-                {errors.rulesRegulations && <p className="text-red-500 text-sm mt-1">{errors.rulesRegulations}</p>}
+                {/* {errors.rulesRegulations && <p className="text-red-500 text-sm mt-1">{errors.rulesRegulations}</p>} */}
               </div>
 
               <div>

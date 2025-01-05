@@ -1,14 +1,17 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { use } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { X, ArrowLeft, Eye, History, Calendar, MapPin, Plus, BarChart2 } from 'lucide-react'
+import { X, ArrowLeft, Eye, History, Calendar, MapPin, Plus, BarChart2 ,Text } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import config from '@/config'
+import axios from 'axios'
+import { useEventContext } from '@/components/contexts/EventContext'
+import { useUserContext } from '@/components/contexts/UserContext'
 
 const ImageFile = 'files/imgs/defaults/events/'
 
@@ -23,7 +26,7 @@ type Event = {
   description: string
 }
 
-const events: Event[] = [
+const eventsBase: Event[] = [
   {
     id: '1',
     name: 'Tech Conference 2023',
@@ -77,17 +80,99 @@ const events: Event[] = [
 ]
 
 // Simulating an async function to fetch published events
-const fetchPublishedEvents = async () => {
-  await new Promise(resolve => setTimeout(resolve, 100)) // Simulating network delay
-  return new Set(events.filter(event => event.view === 'published').map(event => event.id))
+
+
+const saveData = async (
+  table: string,
+  identifier: string,
+  identifierColumn: string,
+  target: string,
+  data: any
+) => {
+  if (data === undefined || data === null) {
+    console.error(`Attempted to update ${target} with undefined or null value`)
+    return false
+  }
+
+  try {
+    const response = await axios.post(
+      `${config.api.host}${config.api.routes.save_fetch}`,
+      { table, identifier, identifierColumn, target, data },
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+
+    const result = response.data
+
+    if (result.success) {
+      console.log(`Successfully updated ${target}`)
+      return true
+    } else {
+      console.error(`Failed to update ${target}: ${result.message}`)
+      return false
+    }
+  } catch (error) {
+    console.error('Error:', error)
+    return false
+  }
 }
 
-const publishedEventsPromise = fetchPublishedEvents()
+const getOrganizerDashboard = async () => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.organizer_dashboard}`);
+    // console.log(response.data)
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return null;
+  }
+};
+
+const getPublished = async (table:string, columns:string[]) =>{
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.organizer_dashboard}`,{
+      params:{
+        table, columns : columns.join(',')
+      }}
+    );
+    // console.log(response.data)
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return null;
+  }
+}
 
 export default function Component() {
-  const publishedEvents = use(publishedEventsPromise)
+  const [publishedEvents, setPublishedEvents] = useState<Set<string>>(new Set())
+  // const publishedEvents = use(publishedEventsPromise)
   const [localPublishedEvents, setLocalPublishedEvents] = React.useState(publishedEvents)
+  const [events, setEvents] = useState(eventsBase);
   const router = useRouter();
+  const { eventId, setProgramId, setEventId } = useEventContext()
+  const { userId, setUserId, setUsertype } = useUserContext()
+
+
+
+  useEffect(() => {
+    // returnPublished()
+    const fillDashBoard = async () => {
+      const data = await getOrganizerDashboard();
+
+      setEvents(data);
+      const publishedEventIds = new Set(data.filter((event: Event) => event.view === 'published').map((event: Event) => event.id))
+      setPublishedEvents(publishedEventIds)
+      setLocalPublishedEvents(publishedEventIds)
+    }
+
+    fillDashBoard()
+    }, [])
+
+    const fetchPublishedEvents = async () => {
+      await new Promise(resolve => setTimeout(resolve, 100)) // Simulating network delay
+      return new Set(events.filter(event => event.view === 'published').map(event => event.id))
+    }
+    
+const publishedEventsPromise = fetchPublishedEvents()
 
   const onClose = () => {
     router.push('/home');
@@ -97,15 +182,71 @@ export default function Component() {
     router.push('/dashboard/organizer/create/event')
   }
 
-  const togglePublish = (id: string) => {
+  const handlePreview = (eventId: string) => {
+    setEventId(eventId)
+    setProgramId('')
+    setUsertype('organizer')
+    router.push('/event')
+    // console.log(eventId)
+  }
+
+  const handleAnalysis = (eventId: string) => {
+    setEventId(eventId)
+    router.push('/dashboard/organizer/analysis')
+    console.log(eventId)
+  }
+
+  const handleEvent = (id: string) =>{
+    if(id){
+      setEventId(id)
+      router.push('/dashboard/organizer/overview')
+    }
+  }
+
+  const togglePublish = (event: Event) => {
+    const id = event.id
     setLocalPublishedEvents(prev => {
+      const event = events.find((e) => e.id === id);
+      if(event){
+        event.view = event.view === 'staged' ? 'published' : 'staged';
+      }
       const newSet = new Set(prev)
       if (newSet.has(id)) {
         newSet.delete(id)
+        handleUnpublish(event)
+        // console.log(id, "unpublish set to 0")
       } else {
         newSet.add(id)
+        handlePublish(event)
+        // console.log(id, "publish set to 1")
       }
       return newSet
+    })
+  }
+
+  const handlePublish = (event: Event) => {
+    // console.log("Set",event.id,"to Published")
+    saveData('events', event.id, 'EID', 'Published', '1')
+    setEvents((prev) => {
+      const updatedEvents = [...prev]
+      const eventIndex = updatedEvents.findIndex((e) => e.id === event.id)
+      if (eventIndex !== -1) {
+        updatedEvents[eventIndex].view = 'published'
+      }
+      return updatedEvents
+    })
+  }
+
+  const handleUnpublish = (event: Event) => {
+    // console.log("Set",event.id,"to Staged")
+    saveData('events', event.id, 'EID', 'Published', '0')
+    setEvents((prev) => {
+      const updatedEvents = [...prev]
+      const eventIndex = updatedEvents.findIndex((e) => e.id === event.id)
+      if (eventIndex !== -1) {
+        updatedEvents[eventIndex].view = 'staged'
+      }
+      return updatedEvents
     })
   }
 
@@ -142,6 +283,8 @@ export default function Component() {
   }
 
   const isHistoryEvent = (event: Event) => event.status === 'concluded' || event.status === 'cancelled'
+
+  
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
@@ -200,8 +343,9 @@ export default function Component() {
                           <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(event.status)} bg-opacity-20`}>
                             {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                           </span>
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${localPublishedEvents.has(event.id) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                            {localPublishedEvents.has(event.id) ? 'Published' : 'Staged'}
+                          
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${event.view == 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                            {event.view == 'published' ? 'Published' : 'Staged'}
                           </span>
                         </div>
                       </div>
@@ -209,18 +353,22 @@ export default function Component() {
                         {!isHistoryEvent(event) && (
                           <Button
                             size="sm"
-                            variant={localPublishedEvents.has(event.id) ? "destructive" : "default"}
-                            onClick={() => togglePublish(event.id)}
+                            variant={event.view == 'published' ? "destructive" : "default"}
+                            onClick={() => togglePublish(event)}
                             className="w-full sm:w-auto text-xs"
                           >
-                            {localPublishedEvents.has(event.id) ? 'Unpublish' : 'Publish'}
+                            {event.view == 'published' ? 'Unpublish' : 'Publish'}
                           </Button>
                         )}
-                        <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs">
+                        <Button onClick={() => {handleEvent(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
+                          <Text className="h-3 w-3 mr-1" />
+                          Overview
+                        </Button>
+                        <Button onClick={() => {handlePreview(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
                           <Eye className="h-3 w-3 mr-1" />
                           Preview
                         </Button>
-                        <Button size="sm" variant="outline" className="w-full sm:w-auto text-xs">
+                        <Button onClick={() => {handleAnalysis(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
                           <BarChart2 className="h-3 w-3 mr-1" />
                           Analytics
                         </Button>

@@ -90,8 +90,8 @@ export default function ProgramRegistration() {
   const router = useRouter()
 
   useEffect(() => {
-    setUserId('1')
-    setProgramId('3')
+    // setUserId('1')
+    // setProgramId('3')
   }, [])
 
   useEffect(() => {
@@ -177,7 +177,8 @@ export default function ProgramRegistration() {
     e.preventDefault()
     if (validateForm()) {
       const options = {
-        key: 'rzp_test_74JvhBshSMhVVm',
+        key: 'rzp_test_WsZ1lzrXRw9B4Z',
+        // key: 'rzp_test_74JvhBshSMhVVm',
         amount: programData.fees * 100,
         currency: 'INR',
         name: members[0].name,
@@ -200,7 +201,7 @@ export default function ProgramRegistration() {
           color: "#ffffff",
         },
       };
-      console.log(options)
+      // console.log(options)
 
       const rzp = new (window as any).Razorpay(options);
       console.log(rzp)
@@ -214,6 +215,7 @@ export default function ProgramRegistration() {
     const registrationData = {
       EID: eventId,
       PID: programId,
+      ParticipantID: userId,
       ParticipantName: members[0].name,
       ParticipantEmail: members[0].email,
       ParticipantPhone: `${members[0].countryCode}${members[0].contact}`,
@@ -228,6 +230,9 @@ export default function ProgramRegistration() {
     } else {
       console.error('Failed to save registration')
     }
+    setTimeout(() => {
+      router.push("/event")
+    }, 5000)
   }
 
   const fillFromProfile = async () => {

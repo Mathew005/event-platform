@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ArrowLeft, Calendar, Clock, MapPin, ChevronRight, Download, X, Bookmark, BookOpen, History, Users, Trash2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,22 +11,27 @@ import { Separator } from "@/components/ui/separator"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import Link from 'next/link'
 import { Toaster, toast } from 'sonner'
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
 import config from '@/config'
-
+import axios from 'axios'
+import { useEventContext } from '@/components/contexts/EventContext'
+import { useUserContext } from '@/components/contexts/UserContext'
 
 const ImageFile = 'files/imgs/defaults/events/'
 
 interface Program {
-  id: string
+  id: number
+  programId: string
   image: string
   programName: string
   eventName: string
+  eventId: string
   institute: string
   date: string
+  gpsLink: string
+  pdf: string
   registrationId: string
   category: string
-  description: string
   rules: string
   location: string
   venue: string
@@ -35,209 +40,206 @@ interface Program {
   amountPaid: number
 }
 
+interface BookmarkedProgram {
+  id: number
+  programId: string
+  image: string
+  title: string
+  location: string
+  date: string
+}
+
 interface Event {
-  id: string
+  id: number
+  eventId: string
   image: string
   title: string
   date: string
   location: string
 }
 
-const programs: Program[] = [
-  {
-    id: '1',
-    image: `${config.api.host}${ImageFile}ai.jpg`,
-    programName: 'AI Workshop',
-    eventName: 'Tech Summit 2024',
-    institute: 'Tech Institute',
-    date: '2024-09-20',
-    registrationId: 'TS2024-001',
-    category: 'Workshop',
-    description: 'Learn about the latest AI technologies and their applications.',
-    rules: 'Bring your own laptop. Prior programming experience required.',
-    location: 'Tech Center',
-    venue: 'Hall A',
-    time: '10:00 AM - 4:00 PM',
-    members: ['John Doe'],
-    amountPaid: 50
-  },
-  {
-    id: '2',
-    image: `${config.api.host}${ImageFile}coding.jpg`,
-    programName: 'Data Science Bootcamp',
-    eventName: 'Data Analytics Conference',
-    institute: 'Data Science Academy',
-    date: '2024-09-25',
-    registrationId: 'DAC2024-002',
-    category: 'Bootcamp',
-    description: 'Intensive 3-day bootcamp covering data analysis, machine learning, and visualization.',
-    rules: 'Participants must have basic knowledge of statistics and programming.',
-    location: 'Data Science Campus',
-    venue: 'Building B, Room 201',
-    time: '9:00 AM - 5:00 PM',
-    members: ['Jane Smith', 'Mike Johnson'],
-    amountPaid: 150
-  },
-  {
-    id: '3',
-    image: `${config.api.host}${ImageFile}semi.png`,
-    programName: 'Cybersecurity Seminar',
-    eventName: 'InfoSec World 2024',
-    institute: 'Cyber Defense Institute',
-    date: '2024-09-30',
-    registrationId: 'ISW2024-003',
-    category: 'Seminar',
-    description: 'Learn about the latest trends and threats in cybersecurity.',
-    rules: 'Open to all IT professionals. NDA must be signed before attendance.',
-    location: 'Virtual Event',
-    venue: 'Online Platform',
-    time: '1:00 PM - 4:00 PM',
-    members: ['Alice Cooper'],
-    amountPaid: 75
-  },
-  {
-    id: '4',
-    image: `${config.api.host}${ImageFile}web designning.jpeg`,
-    programName: 'Web Development Workshop',
-    eventName: 'Frontend Masters Conference',
-    institute: 'Code Academy',
-    date: '2024-10-05',
-    registrationId: 'FMC2024-004',
-    category: 'Workshop',
-    description: 'Hands-on workshop on modern web development techniques and frameworks.',
-    rules: 'Basic knowledge of HTML, CSS, and JavaScript required.',
-    location: 'Tech Hub',
-    venue: 'Conference Room 3',
-    time: '9:00 AM - 6:00 PM',
-    members: ['Emma Watson', 'Daniel Radcliffe'],
-    amountPaid: 100
-  },
-  {
-    id: '5',
-    image: `${config.api.host}${ImageFile}blockchain.jpeg`,
-    programName: 'Blockchain Fundamentals',
-    eventName: 'Crypto Expo 2024',
-    institute: 'Blockchain Institute',
-    date: '2024-10-10',
-    registrationId: 'CE2024-005',
-    category: 'Course',
-    description: 'Comprehensive course on blockchain technology and its applications.',
-    rules: 'No prior knowledge required. Bring a laptop for practical sessions.',
-    location: 'Innovation Center',
-    venue: 'Auditorium',
-    time: '10:00 AM - 3:00 PM',
-    members: ['Robert Downey Jr.'],
-    amountPaid: 200
-  }
-]
+const participantDashboardDataBase = {
+  registrations: [
+    {
+      id: 0,
+      programId: 'P001',
+      image: `${config.api.host}${ImageFile}ai.jpg`,
+      programName: 'AI Workshop',
+      eventName: 'Tech Summit 2024',
+      institute: 'Tech Institute',
+      date: '2025-09-20',
+      registrationId: 'TS2024-001',
+      eventID: "1",
+      category: 'Workshop',
+      gpsLink: "http://localhost:3000/profile",
+      rules: 'Bring your own laptop. Prior programming experience required.',
+      pdf: "http://localhost/cfc/files/docs/docs_67799c8d2cfde5.39975639.jpg",
+      location: 'Tech Center',
+      venue: 'Hall A',
+      time: '10:00 AM - 4:00 PM',
+      members: ['John Doe'],
+      amountPaid: 50
+    },
+    {
+      id: 1,
+      programId: 'P002',
+      image: `${config.api.host}${ImageFile}coding.jpg`,
+      programName: 'Data Science Bootcamp',
+      eventName: 'Data Analytics Conference',
+      institute: 'Data Science Academy',
+      date: '2025-09-25',
+      eventID: "1",
+      registrationId: 'DAC2024-002',
+      category: 'Bootcamp',
+      rules: 'Participants must have basic knowledge of statistics and programming.',
+      gpsLink: "http://localhost:3000/profile",
+      location: 'Data Science Campus',
+      pdf: "http://localhost/cfc/files/docs/docs_67799c8d2cfde5.39975639.jpg",
+      venue: 'Building B, Room 201',
+      time: '9:00 AM - 5:00 PM',
+      members: ['Jane Smith', 'Mike Johnson'],
+      amountPaid: 150
+    },
+    {
+      id: 2,
+      programId: 'P003',
+      image: `${config.api.host}${ImageFile}semi.png`,
+      programName: 'Cybersecurity Seminar',
+      eventName: 'InfoSec World 2024',
+      institute: 'Cyber Defense Institute',
+      date: '2024-09-30',
+      eventID: "1",
+      registrationId: 'ISW2024-003',
+      category: 'Seminar',
+      rules: 'Open to all IT professionals. NDA must be signed before attendance.',
+      gpsLink: "http://localhost:3000/profile",
+      pdf: "http://localhost/cfc/files/docs/docs_67799c8d2cfde5.39975639.jpg",
+      location: 'Virtual Event',
+      venue: 'Online Platform',
+      time: '1:00 PM - 4:00 PM',
+      members: ['Alice Cooper'],
+      amountPaid: 75
+    }
+  ],
+  bookmarkedPrograms: [
+    {
+      id: 0,
+      programId: 'P004',
+      image: `${config.api.host}${ImageFile}web designning.jpeg`,
+      title: 'Web Development Workshop',
+      location: 'Tech Hub',
+      date: '2024-10-05',
+    },
+    {
+      id: 1,
+      programId: 'P005',
+      image: `${config.api.host}${ImageFile}blockchain.jpeg`,
+      title: 'Blockchain Fundamentals',
+      location: 'Innovation Center',
+      date: '2025-10-10',
+    }
+  ],
+  bookmarkedEvents: [
+    {
+      id: 0,
+      eventId: 'E001',
+      image: `${config.api.host}${ImageFile}`,
+      title: 'Tech Summit 2024',
+      date: '2024-09-20',
+      location: 'Tech Center'
+    },
+    {
+      id: 1,
+      eventId: 'E002',
+      image: `${config.api.host}${ImageFile}`,
+      title: 'Data Analytics Conference',
+      date: '2024-09-25',
+      location: 'Data Science Campus'
+    },
+    {
+      id: 2,
+      eventId: 'E003',
+      image: `${config.api.host}${ImageFile}`,
+      title: 'InfoSec World 2024',
+      date: '2024-09-30',
+      location: 'Virtual Event'
+    }
+  ]
+}
 
-const events: Event[] = [
-  {
-    id: '1',
-    image: `${config.api.host}${ImageFile}`,
-    title: 'Tech Summit 2024',
-    date: '2024-09-20',
-    location: 'Tech Center'
-  },
-  {
-    id: '2',
-    image: `${config.api.host}${ImageFile}`,
-    title: 'Data Analytics Conference',
-    date: '2024-09-25',
-    location: 'Data Science Campus'
-  },
-  {
-    id: '3',
-    image: `${config.api.host}${ImageFile}`,
-    title: 'InfoSec World 2024',
-    date: '2024-09-30',
-    location: 'Virtual Event'
-  },
-  {
-    id: '4',
-    image: `${config.api.host}${ImageFile}`,
-    title: 'Frontend Masters Conference',
-    date: '2024-10-05',
-    location: 'Tech Hub'
-  },
-  {
-    id: '5',
-    image: `${config.api.host}${ImageFile}`,
-    title: 'Crypto Expo 2024',
-    date: '2024-10-10',
-    location: 'Innovation Center'
-  },
-  {
-    id: '6',
-    image: `${config.api.host}${ImageFile}`,
-    title: 'AI and Ethics Symposium',
-    date: '2024-09-15',
-    location: 'University Auditorium'
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="text-center py-8">
+      <p className="text-gray-500">{message}</p>
+    </div>
+  )
+}
+
+
+const getParticipantDashboard = async (id: string) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.participant_dashboard}`, {
+      params:{id}
+    });
+    // console.log(response.data)
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return null;
   }
-]
+};
 
 export default function ParticipantDashboard() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
-  const [bookmarkedPrograms, setBookmarkedPrograms] = useState<Set<string>>(new Set(programs.map(p => p.id)))
-  const [bookmarkedEvents, setBookmarkedEvents] = useState<Set<string>>(new Set(events.map(e => e.id)))
+  const [participantDashboardData, setParticipantDashboardData] = useState(participantDashboardDataBase)
+  const [bookmarkedPrograms, setBookmarkedPrograms] = useState<BookmarkedProgram[]>(participantDashboardData.bookmarkedPrograms)
+  const [bookmarkedEvents, setBookmarkedEvents] = useState<Event[]>(participantDashboardData.bookmarkedEvents)
   const router = useRouter();
+  const { eventId, setEventId } = useEventContext()
+  const { userId, setUserId, setUsertype } = useUserContext()
+
+  useEffect(()=>{
+    setUserId('1')
+  },[])
+
+  useEffect(() => {
+    const getData = async () => {
+      if(userId){
+        const data = await getParticipantDashboard(userId)
+        // console.log(data)
+        setParticipantDashboardData(data)
+        setBookmarkedEvents(data.bookmarkedEvents)
+        setBookmarkedPrograms(data.bookmarkedPrograms)
+    }
+    }
+    getData()
+  }, [userId])
 
   const onClose = () => {
     router.push('/home');
   };
 
-  const sortedPrograms = useMemo(() => {
-    const today = new Date('2024-10-02')
-    today.setHours(0, 0, 0, 0)
-    return programs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [])
 
-  const toggleBookmark = (id: string, isEvent: boolean) => {
+  const sortedRegistrations = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return participantDashboardData.registrations.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [participantDashboardData.registrations])
+
+  const toggleBookmark = (id: number, isEvent: boolean) => {
     if (isEvent) {
-      setBookmarkedEvents(prev => {
-        const newSet = new Set(prev)
-        if (newSet.has(id)) {
-          newSet.delete(id)
-        } else {
-          newSet.add(id)
-        }
-        return newSet
-      })
-      toast('Event Book Mark Removed');
+      setBookmarkedEvents(prev => prev.filter(event => event.id !== id))
+      toast('Event Bookmark Removed');
     } else {
-      setBookmarkedPrograms(prev => {
-        const newSet = new Set(prev)
-        if (newSet.has(id)) {
-          newSet.delete(id)
-        } else {
-          newSet.add(id)
-        }
-        return newSet
-      })
-      toast('Program Book Mark Removed');
+      setBookmarkedPrograms(prev => prev.filter(program => program.id !== id))
+      toast('Program Bookmark Removed');
     }
   }
 
   const removeExpired = () => {
-    const today = new Date('2024-10-02')
-    setBookmarkedPrograms(prev => {
-      const newSet = new Set(prev)
-      programs.forEach(program => {
-        if (new Date(program.date) < today) {
-          newSet.delete(program.id)
-        }
-      })
-      return newSet
-    })
-    setBookmarkedEvents(prev => {
-      const newSet = new Set(prev)
-      events.forEach(event => {
-        if (new Date(event.date) < today) {
-          newSet.delete(event.id)
-        }
-      })
-      return newSet
-    })
+    const today = new Date()
+    setBookmarkedPrograms(prev => prev.filter(program => new Date(program.date) >= today))
+    setBookmarkedEvents(prev => prev.filter(event => new Date(event.date) >= today))
     toast.success('Expired events and programs were removed');
   }
 
@@ -247,9 +249,8 @@ export default function ParticipantDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
-      <Toaster richColors   />
+      <Toaster richColors />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <Toaster richColors   />
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <header className="flex items-center justify-between p-6 border-b">
             <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -275,9 +276,13 @@ export default function ParticipantDashboard() {
                 <section>
                   <h2 className="text-xl font-semibold mb-4">Registered</h2>
                   <div className="space-y-4">
-                    {sortedPrograms.filter(p => new Date(p.date) >= new Date('2024-10-02')).map((program) => (
-                      <ProgramCard key={program.id} program={program} openDialog={openDialog}  />
-                    ))}
+                    {sortedRegistrations.filter(p => new Date(p.date) >= new Date()).length > 0 ? (
+                      sortedRegistrations.filter(p => new Date(p.date) >= new Date()).map((program) => (
+                        <ProgramCard key={program.id} program={program} openDialog={openDialog} />
+                      ))
+                    ) : (
+                      <EmptyState message="No registered programs" />
+                    )}
                   </div>
                 </section>
                 <Separator />
@@ -287,9 +292,13 @@ export default function ParticipantDashboard() {
                     History
                   </h2>
                   <div className="space-y-4">
-                    {sortedPrograms.filter(p => new Date(p.date) < new Date('2024-10-02')).map((program) => (
-                      <ProgramCard key={program.id} program={program} openDialog={openDialog} />
-                    ))}
+                    {sortedRegistrations.filter(p => new Date(p.date) < new Date()).length > 0 ? (
+                      sortedRegistrations.filter(p => new Date(p.date) < new Date()).map((program) => (
+                        <ProgramCard key={program.id} program={program} openDialog={openDialog} />
+                      ))
+                    ) : (
+                      <EmptyState message="No program history" />
+                    )}
                   </div>
                 </section>
               </div>
@@ -310,17 +319,25 @@ export default function ParticipantDashboard() {
 
                 <TabsContent value="programs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {programs.filter(program => bookmarkedPrograms.has(program.id)).map((program) => (
-                      <BookmarkCard key={program.id} item={program} isEvent={false} onUnbookmark={() => toggleBookmark(program.id, false)} onViewDetails={() => openDialog(program)} />
-                    ))}
+                    {bookmarkedPrograms.length > 0 ? (
+                      bookmarkedPrograms.map((program) => (
+                        <BookmarkCard key={program.id} item={program} isEvent={false} onUnbookmark={() => toggleBookmark(program.id, false)} onViewDetails={() => {}} />
+                      ))
+                    ) : (
+                      <EmptyState message="No bookmarked programs" />
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="events">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {events.filter(event => bookmarkedEvents.has(event.id)).map((event) => (
-                      <BookmarkCard key={event.id} item={event} isEvent={true} onUnbookmark={() => toggleBookmark(event.id, true)} onViewDetails={() => {}} />
-                    ))}
+                    {bookmarkedEvents.length > 0 ? (
+                      bookmarkedEvents.map((event) => (
+                        <BookmarkCard key={event.id} item={event} isEvent={true} onUnbookmark={() => toggleBookmark(event.id, true)} onViewDetails={() => {}} />
+                      ))
+                    ) : (
+                      <EmptyState message="No bookmarked events" />
+                    )}
                   </div>
                 </TabsContent>
 
@@ -362,15 +379,14 @@ export default function ParticipantDashboard() {
                     <p><strong>Program:</strong> {selectedProgram.programName}</p>
                     <p><strong>Registration ID:</strong> {selectedProgram.registrationId}</p>
                     <p><strong>Category:</strong> {selectedProgram.category}</p>
-                    <p><strong>Description:</strong> {selectedProgram.description}</p>
                     <p><strong>Rules:</strong> {selectedProgram.rules}</p>
-                    <Button variant="outline" size="sm">
+                    <Button onClick={() => {window.open(selectedProgram.pdf)}} variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
                     <p><strong>Location:</strong> {selectedProgram.location}</p>
                     <p><strong>Venue:</strong> {selectedProgram.venue}</p>
-                    <Button variant="outline" size="sm">
+                    <Button onClick={() => {window.open(selectedProgram.gpsLink)}} variant="outline" size="sm">
                       <MapPin className="h-4 w-4 mr-2" />
                       View on Map
                     </Button>
@@ -391,6 +407,22 @@ export default function ParticipantDashboard() {
 }
 
 function ProgramCard({ program, openDialog}: { program: Program; openDialog: (program: Program) => void}) {
+  
+  const router = useRouter();
+  const { eventId, setEventId , programId, setProgramId} = useEventContext()
+  
+  const handleView = (program: Program) => {
+    // console.log(program)
+    const pid = program.programId
+    const eid = program.eventId
+    if(pid && eid){
+      setEventId(eid)
+      setProgramId(pid)
+      // console.log("Event: ", eid, "Program: ", pid)
+      router.push('/event')
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg shadow p-4 flex items-center space-x-4 cursor-pointer">
       <img src={program.image} alt={program.programName} className="w-16 h-16 object-cover rounded" />
@@ -404,9 +436,9 @@ function ProgramCard({ program, openDialog}: { program: Program; openDialog: (pr
         </div>
       </div>
       <div className="text-right">
-        <Link href={`/program/${program.id}`} passHref>
-          <Button variant="outline" size="sm" className="w-15 mr-2 md:w-24 bg-white text-black hover:bg-gray-200">View</Button>
-        </Link>
+        
+          <Button onClick={()=>{handleView(program)}} variant="outline" size="sm" className="w-15 mr-2 md:w-24 bg-white text-black hover:bg-gray-200">View</Button>
+        
         <div className="mt-2">
           <Button onClick={() => openDialog(program)} variant="outline" size="sm" className="w-14 mr-2 md:w-24 bg-black text-white hover:bg-gray-800">Details</Button>
         </div>
@@ -418,14 +450,27 @@ function ProgramCard({ program, openDialog}: { program: Program; openDialog: (pr
   );
 }
 
-function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: Event | Program; isEvent: boolean; onUnbookmark: () => void; onViewDetails: () => void }) {
+function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: BookmarkedProgram | Event; isEvent: boolean; onUnbookmark: () => void; onViewDetails: () => void }) {
   const isExpired = new Date(item.date) < new Date()
+  const router = useRouter()
+
+  const handleViewDetails = () => {
+    if (isEvent) {
+      // Placeholder for event details navigation
+      console.log('Navigate to event details')
+      // router.push(`/event/${(item as Event).eventId}`)
+    } else {
+      // Placeholder for program details navigation
+      console.log('Navigate to program details')
+      router.push(`/program/${(item as BookmarkedProgram).programId}`)
+    }
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow overflow-hidden ${isExpired ? 'opacity-50' : ''}`}>
-      <img src={item.image} alt={isEvent ? item.title : (item as Program).programName} className="w-full h-32 object-cover" />
+      <img src={item.image} alt={item.title} className="w-full h-32 object-cover" />
       <div className="p-4">
-        <h3 className="font-semibold">{isEvent ? item.title : (item as Program).programName}</h3>
+        <h3 className="font-semibold">{item.title}</h3>
         <div className="flex items-center mt-2">
           <Calendar className="h-4 w-4 mr-1 text-gray-400" />
           <span className="text-sm text-gray-600">{item.date}</span>
@@ -435,7 +480,13 @@ function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: Ev
           <span className="text-sm text-gray-600">{item.location}</span>
         </div>
         <div className="flex justify-between items-center mt-4">
-          <Button variant="outline" size="sm" className="bg-black text-white hover:bg-gray-800" disabled={isExpired} onClick={onViewDetails}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-black text-white hover:bg-gray-800" 
+            disabled={isExpired} 
+            onClick={handleViewDetails}
+          >
             View Details
           </Button>
           <Button variant="ghost" size="sm" onClick={onUnbookmark}>
@@ -464,3 +515,4 @@ function ProgramStatus({ date }: { date: string }) {
     return <p className="text-xs text-gray-400">{Math.abs(diffDays)} days ago</p>
   }
 }
+

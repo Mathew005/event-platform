@@ -225,8 +225,8 @@ export default function EventOverview() {
 
 
   useEffect(() => {
-    setUserId('1')
-    setEventId('7')
+    // setUserId('1')
+    // setEventId('7')
     // setUsertype('participant')
 }, [])
 
@@ -265,6 +265,7 @@ useEffect(() => {
 
   const handleClose = () => {
     router.push('/dashboard/organizer')
+    // router.push('/dashboard/organizer/analysis')
   }
 
   const handlePublish = () => {
@@ -292,6 +293,23 @@ useEffect(() => {
     } 
 
     request()
+  }
+
+  const handleAdd = (id:string) => {
+    setEventId(id)
+    router.push('/dashboard/organizer/create/program')
+  }
+
+  const handleProgramEdit = (id:string) => {
+    setProgramId(id)
+    router.push('/dashboard/organizer/create/program')
+  }
+
+  const handleProgramView = (eventid:string,programid:string) => {
+    setEventId(programid)
+    setProgramId(eventid)
+    setUsertype('organizer')
+    router.push('/event')
   }
 
   const handleRemoveProgram = (programId: string) => {
@@ -442,7 +460,7 @@ useEffect(() => {
           >
             <List className="h-4 w-4" />
           </Toggle>
-          <Button size="sm">
+          <Button onClick={() => {handleAdd(eventId)}} size="sm">
             <Plus className="mr-2 h-4 w-4" /> Add Program
           </Button>
         </div>
@@ -513,7 +531,9 @@ useEffect(() => {
                   </div>
                 </div>
                 <div className="mt-4 flex space-x-2">
-                  <Button size="sm" variant="outline">
+                  <Button onClick={() => {
+                    handleProgramEdit(program.id)
+                  }} size="sm" variant="outline">
                     <Edit className="mr-2 h-4 w-4" /> Edit
                   </Button>
                   <Dialog>

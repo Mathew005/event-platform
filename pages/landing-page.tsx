@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar, MapPin, Clock, Filter, ChevronLeft, ChevronRight, User, LogOut, Settings, Search } from 'lucide-react'
+import { Calendar, MapPin, Clock, Filter, ChevronLeft, ChevronRight, User, LogOut, Settings } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from 'next/navigation'
 import { DateRange } from "react-day-picker"
@@ -219,14 +219,20 @@ export default function Component() {
   };
 
   const handleCardClick = (item: any) => {
-    if (item.type === 'event') {
+    console.log(item)
+    if (item.type === 'program') {
+      console.log('Event clicked:', item.eventId, 'Program clicked:', item.id);
+      setEventId(item.eventId)
+      setProgramId(item.id)
+      router.push('/event')
+      return
+      // Add your event handling logic here
+    } 
+    if(item.type == 'event') {
       console.log('Event clicked:', item.id);
       setEventId(item.id)
-      // Add your event handling logic here
-    } else {
-      console.log('Event clicked:', item.eventId, 'Program clicked:', item.id);
-      setProgramId(item.id)
-      setEventId(item.eventId)
+      router.push('/event')
+      return
       // Add your program handling logic here
     }
   };
@@ -282,10 +288,10 @@ export default function Component() {
                         <User className="mr-2 h-4 w-4" />
                         <span>Edit Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      {/* <DropdownMenuItem>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Settings</span>
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogOut}>
                         <LogOut className="mr-2 h-4 w-4" />
@@ -351,22 +357,26 @@ export default function Component() {
           ):(
             <p>No featured events available at the moment.</p>)
           }
+          {eventLength > 0 && 
           <Button
-            variant="outline"
-            className="absolute left-4 top-1/2 transform -translate-y-1/2"
-            onClick={prevSlide}
-            aria-label="Previous slide"
+          variant="outline"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2"
+          onClick={prevSlide}
+          aria-label="Previous slide"
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
+        }
+        {eventLength > 0 && 
           <Button
-            variant="outline"
-            className="absolute right-4 top-1/2 transform -translate-y-1/2"
-            onClick={nextSlide}
-            aria-label="Next slide"
+          variant="outline"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2"
+          onClick={nextSlide}
+          aria-label="Next slide"
           >
             <ChevronRight className="h-6 w-6" />
           </Button>
+          }
         </section>
 
         <section id="events" className="mb-12">

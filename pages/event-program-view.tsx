@@ -7,6 +7,7 @@ import config from '@/config'
 import { useEventContext } from '@/components/contexts/EventContext'
 import { Toaster,toast} from 'sonner'
 import { useUserContext } from '@/components/contexts/UserContext'
+import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { register } from 'module'
 
@@ -201,25 +202,32 @@ export default function Component() {
   const {setUserId, setUsertype, userId, usertype} = useUserContext();
   const [event, setEvent] = useState<Event>(eventbase);
   const [orgwebsite, setOrgWebsite] = useState("");
+  const router = useRouter()
 
   useEffect(() => {
-    setEventId('7')
-    setUserId('1')
-    setUsertype('participant')
+    // setEventId('7')
+    // setProgramId('1')
+    // setUserId('1')
+    // setUsertype('participant')
   }, [])
   
   useEffect(() => {
+    // console.log(eventId)
     const fillEventData = async () =>{
       if(eventId){
         const data = await getEventProgramData(eventId)
-        console.log(data)
+        // console.log(data)
         setOrgWebsite(data.organizer.website)
         setEvent(data);
+        if(programId){
+          console.log(programId)
+          setSelectedProgram(data.programs.find(program => program.id === programId))
+        }
       }
     }
 
     fillEventData()
-  }, [eventId])
+  }, [eventId,programId])
 
 
   useEffect(() => {
@@ -290,19 +298,20 @@ export default function Component() {
   }, [selectedProgram])
 
   const handleRegister = (programId: string) => {
-    if(!userId){
-      toast.error("Please Log In In Order To Register")
-      return
-    }
     const checkFullProfile = async () => {
       const data = await fetchData("participants", userId, "PID", ["PInstitute"])
+      // console.log(data)
       if(!data.PInstitute){
         toast.error("Plese Complete You Profile In Order To Register")
-        return
+        return false
       }
+      return true
     }
-    checkFullProfile()
-    console.log(programId)
+    const check = checkFullProfile()
+    if(check){
+      setProgramId(programId)
+      router.push('/event/reg')
+    }
   }
 
   return (
