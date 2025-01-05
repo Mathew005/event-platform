@@ -221,9 +221,10 @@ export default function ParticipantDashboard() {
 
 
   const sortedRegistrations = useMemo(() => {
+    if(participantDashboardData){
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    return participantDashboardData.registrations.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    return participantDashboardData.registrations.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())}
   }, [participantDashboardData.registrations])
 
   const toggleBookmark = (id: number, isEvent: boolean) => {

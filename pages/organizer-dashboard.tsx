@@ -12,6 +12,7 @@ import config from '@/config'
 import axios from 'axios'
 import { useEventContext } from '@/components/contexts/EventContext'
 import { useUserContext } from '@/components/contexts/UserContext'
+import { Toaster, toast } from 'sonner'
 
 const ImageFile = 'files/imgs/defaults/events/'
 
@@ -80,6 +81,18 @@ const eventsBase: Event[] = [
 ]
 
 // Simulating an async function to fetch published events
+
+const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.save_fetch}`, {
+      params: { table, id, columnIdentifier, columnTargets: columnTargets.join(',') }
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return null
+  }
+}
 
 
 const saveData = async (
@@ -179,7 +192,18 @@ const publishedEventsPromise = fetchPublishedEvents()
   };
 
   const handleCreateEvent = () => {
-    router.push('/dashboard/organizer/create/event')
+    if(userId){
+    const checkProfile = async () => {
+      const data = await fetchData("organizers", userId, "OID", ["OInstitute"])
+      if(!data.OInstitute){
+        // console.log()
+        toast.error("Please Complete The Profile To Create An Event")
+        return false
+      }
+      router.push('/dashboard/organizer/create/event')
+    }
+    checkProfile()
+    }   
   }
 
   const handlePreview = (eventId: string) => {
@@ -288,6 +312,7 @@ const publishedEventsPromise = fetchPublishedEvents()
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
+      <Toaster richColors/>
       <div className="container mx-auto max-w-7xl bg-white rounded-lg shadow-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
           <div className="flex justify-between items-center w-full sm:w-auto">
@@ -313,73 +338,79 @@ const publishedEventsPromise = fetchPublishedEvents()
         </div>
 
         <ScrollArea className="h-[calc(100vh-180px)]">
-          {sortedEvents.map((event, index) => {
-            const isFirstHistory = isHistoryEvent(event) && (index === 0 || !isHistoryEvent(sortedEvents[index - 1]))
-            return (
-              <React.Fragment key={event.id}>
-                {isFirstHistory && (
-                  <div className="flex items-center space-x-2 my-4">
-                    <History className="h-5 w-5" />
-                    <span className="text-lg font-semibold">History</span>
-                    <Separator className="flex-grow" />
+  {sortedEvents.length === 0 ? (
+    <div className="flex items-center justify-center h-full">
+      <span className="text-lg text-gray-500">No events available.</span>
+    </div>
+  ) : (
+    sortedEvents.map((event, index) => {
+      const isFirstHistory = isHistoryEvent(event) && (index === 0 || !isHistoryEvent(sortedEvents[index - 1]));
+      return (
+        <React.Fragment key={event.id}>
+          {isFirstHistory && (
+            <div className="flex items-center space-x-2 my-4">
+              <History className="h-5 w-5" />
+              <span className="text-lg font-semibold">History</span>
+              <Separator className="flex-grow" />
+            </div>
+          )}
+          <Card className="mb-4 hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <img src={event.image} alt={event.name} className="w-full sm:w-40 h-40 object-cover rounded" />
+                <div className="flex-grow space-y-2">
+                  <h2 className="text-xl font-semibold">{event.name}</h2>
+                  <p className="text-sm text-gray-600">{event.description}</p>
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <Calendar className="h-4 w-4" />
+                    <span>{formatDate(event.date)}</span>
                   </div>
-                )}
-                <Card className="mb-4 hover:shadow-lg transition-shadow duration-200">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                      <img src={event.image} alt={event.name} className="w-full sm:w-40 h-40 object-cover rounded" />
-                      <div className="flex-grow space-y-2">
-                        <h2 className="text-xl font-semibold">{event.name}</h2>
-                        <p className="text-sm text-gray-600">{event.description}</p>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(event.date)}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <MapPin className="h-4 w-4" />
-                          <span>{event.location}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(event.status)} bg-opacity-20`}>
-                            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                          </span>
-                          
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${event.view == 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                            {event.view == 'published' ? 'Published' : 'Staged'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col space-y-2 sm:self-start w-full sm:w-auto">
-                        {!isHistoryEvent(event) && (
-                          <Button
-                            size="sm"
-                            variant={event.view == 'published' ? "destructive" : "default"}
-                            onClick={() => togglePublish(event)}
-                            className="w-full sm:w-auto text-xs"
-                          >
-                            {event.view == 'published' ? 'Unpublish' : 'Publish'}
-                          </Button>
-                        )}
-                        <Button onClick={() => {handleEvent(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
-                          <Text className="h-3 w-3 mr-1" />
-                          Overview
-                        </Button>
-                        <Button onClick={() => {handlePreview(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
-                          <Eye className="h-3 w-3 mr-1" />
-                          Preview
-                        </Button>
-                        <Button onClick={() => {handleAnalysis(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
-                          <BarChart2 className="h-3 w-3 mr-1" />
-                          Analytics
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </React.Fragment>
-            )
-          })}
-        </ScrollArea>
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <MapPin className="h-4 w-4" />
+                    <span>{event.location}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(event.status)} bg-opacity-20`}>
+                      {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                    </span>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${event.view == 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {event.view == 'published' ? 'Published' : 'Staged'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-2 sm:self-start w-full sm:w-auto">
+                  {!isHistoryEvent(event) && (
+                    <Button
+                      size="sm"
+                      variant={event.view == 'published' ? "destructive" : "default"}
+                      onClick={() => togglePublish(event)}
+                      className="w-full sm:w-auto text-xs"
+                    >
+                      {event.view == 'published' ? 'Unpublish' : 'Publish'}
+                    </Button>
+                  )}
+                  <Button onClick={() => {handleEvent(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
+                    <Text className="h-3 w-3 mr-1" />
+                    Overview
+                  </Button>
+                  <Button onClick={() => {handlePreview(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
+                    <Eye className="h-3 w-3 mr-1" />
+                    Preview
+                  </Button>
+                  <Button onClick={() => {handleAnalysis(event.id)}} size="sm" variant="outline" className="w-full sm:w-auto text-xs">
+                    <BarChart2 className="h-3 w-3 mr-1" />
+                    Analytics
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </React.Fragment>
+      );
+    })
+  )}
+</ScrollArea>
+
       </div>
     </div>
   )

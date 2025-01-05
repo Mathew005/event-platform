@@ -211,7 +211,7 @@ export default function Component({ifLogin}:ifLogin) {
               <div className="space-y-2">
                 <Label htmlFor="contactNumber">Contact Number</Label>
                 <div className="flex space-x-2">
-                  <Select name="countryCode">
+                  <Select name="countryCode" defaultValue="+91">
                     <SelectTrigger className="w-[120px]">
                       <SelectValue placeholder="Code" />
                     </SelectTrigger>
@@ -223,7 +223,18 @@ export default function Component({ifLogin}:ifLogin) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Input id="contactNumber" name="contactNumber" type="tel" required className="flex-1" />
+                  <Input 
+                    id="contactNumber" 
+                    name="contactNumber" 
+                    type="tel" 
+                    required 
+                    className="flex-1" 
+                    pattern="[0-9]*" 
+                    inputMode="numeric" 
+                    onInput={(e) => {
+                      e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    }}
+                  />
                 </div>
               </div>
               

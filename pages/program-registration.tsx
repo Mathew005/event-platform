@@ -164,6 +164,12 @@ export default function ProgramRegistration() {
 
   const validateForm = () => {
     const newErrors: { [key: string]: boolean } = {}
+
+    if (members.length < programData.minMembers) {
+      toast.error(`Please add at least ${programData.minMembers} member(s).`);
+      return false;
+    }
+
     members.forEach((member, index) => {
       if (!member.name) newErrors[`name-${index}`] = true
       if (!member.email) newErrors[`email-${index}`] = true
@@ -177,7 +183,8 @@ export default function ProgramRegistration() {
     e.preventDefault()
     if (validateForm()) {
       const options = {
-        key: 'rzp_test_WsZ1lzrXRw9B4Z',
+        key: 'rzp_test_rTXUa2famU8sfm',
+        // key: 'rzp_test_WsZ1lzrXRw9B4Z',
         // key: 'rzp_test_74JvhBshSMhVVm',
         amount: programData.fees * 100,
         currency: 'INR',
@@ -204,7 +211,7 @@ export default function ProgramRegistration() {
       // console.log(options)
 
       const rzp = new (window as any).Razorpay(options);
-      console.log(rzp)
+      // console.log(rzp)
       rzp.open();
     } else {
       toast.error(`Please fill in all required fields for ${programData.isGroupEvent ? programData.minMembers : 1} member(s).`)
