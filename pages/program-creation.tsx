@@ -457,7 +457,7 @@ export default function ProgramCreation() {
       const formData = new FormData()
       formData.append('type', 'docs')
       formData.append('file', file)
-
+      
       const uploadResponse = await axios.post(`${config.api.host}${config.api.routes.upload}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

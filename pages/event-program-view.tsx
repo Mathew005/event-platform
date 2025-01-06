@@ -52,113 +52,17 @@ interface Event {
 const ImageFile = 'files/imgs/defaults/events/'
 
 const eventbase: Event = {
-  id:"1",
-  name: "TechFest 2023",
-  institution: "Global Tech University",
-  category: "Technology & Innovation",
-  location: "Silicon Valley Convention Center",
-  gpsLink: "https://goo.gl/maps/example",
-  description: "TechFest 2023 is the premier technology event of the year, bringing together innovators, entrepreneurs, and tech enthusiasts from around the world. Experience cutting-edge demonstrations, insightful workshops, and unparalleled networking opportunities.",
-  duration: "September 15-18, 2023",
-  coordinators: [
-    { name: "Dr. Emily Chen", email: "emily.chen@globaltech.edu", phone: "+1 (555) 123-4567", isFaculty: true },
-    { name: "Mark Johnson", email: "mark.johnson@globaltech.edu", phone: "+1 (555) 987-6543", isFaculty: false }
-  ],
-  image: `${config.api.host}${ImageFile}tech_confernce.jpg?height=400&width=800`,
-  programs: [
-    {
-      id: "1",
-      name: "AI & Machine Learning Hackathon",
-      category: "Competition",
-      date: "September 15-16, 2023",
-      pdf:'',
-      time: "9:00 AM - 9:00 PM",
-      image: `${config.api.host}${ImageFile}ai.jpg?height=300&width=400`,
-      rules: "Form teams of 2-4 members. Develop an AI solution for a real-world problem within 36 hours. All code must be original and created during the event.",
-      regFees: 100,
-      isTeamEvent: true,
-      minParticipants: 2,
-      maxParticipants: 4,
-      coordinators: [
-        { name: "Dr. Alex Wong", email: "alex.wong@globaltech.edu", phone: "+1 (555) 234-5678", isFaculty: true },
-        { name: "Sarah Lee", email: "sarah.lee@globaltech.edu", phone: "+1 (555) 876-5432", isFaculty: false }
-      ],
-      registrationOpen: true
-    },
-    {
-      id: "2",
-      name: "Blockchain Workshop",
-      category: "Workshop",
-      date: "September 16, 2023",
-      time: "10:00 AM - 4:00 PM",
-      image: `${config.api.host}${ImageFile}blockchain.jpeg?height=300&width=400`,
-      rules: "Basic programming knowledge required. Bring your own laptop. Limited to 50 participants.",
-      regFees: 75,
-      pdf:'',
-      isTeamEvent: false,
-      minParticipants: 1,
-      maxParticipants: 1,
-      coordinators: [
-        { name: "Prof. Michael Brown", email: "michael.brown@globaltech.edu", phone: "+1 (555) 345-6789", isFaculty: true }
-      ],
-      registrationOpen: true
-    },
-    {
-      id: "3",
-      name: "Future of Tech Panel Discussion",
-      category: "Seminar",
-      date: "September 17, 2023",
-      time: "2:00 PM - 5:00 PM",
-      image: `${config.api.host}${ImageFile}panel.jpg?height=300&width=400`,
-      rules: "Open to all attendees. Q&A session included. Seating is first-come, first-served.",
-      regFees: 25,
-      isTeamEvent: false,
-      pdf:'',
-      minParticipants: 1,
-      maxParticipants: 1,
-      coordinators: [
-        { name: "Lisa Garcia", email: "lisa.garcia@globaltech.edu", phone: "+1 (555) 456-7890", isFaculty: false }
-      ],
-      registrationOpen: false
-    },
-    {
-      id: "4",
-      name: "Robotics Showcase",
-      category: "Exhibition",
-      date: "September 17-18, 2023",
-      time: "10:00 AM - 6:00 PM",
-      image: `${config.api.host}${ImageFile}robotics.jpg?height=300&width=400`,
-      rules: "Participants must pre-register to display their robots. All robots must comply with safety regulations.",
-      regFees: 50,
-      pdf:'',
-      isTeamEvent: true,
-      minParticipants: 1,
-      maxParticipants: 5,
-      coordinators: [
-        { name: "Dr. Robert Kim", email: "robert.kim@globaltech.edu", phone: "+1 (555) 567-8901", isFaculty: true },
-        { name: "Jennifer Patel", email: "jennifer.patel@globaltech.edu", phone: "+1 (555) 678-9012", isFaculty: false }
-      ],
-      registrationOpen: true
-    },
-    {
-      id: "5",
-      name: "Cybersecurity Challenge",
-      category: "Competition",
-      date: "September 18, 2023",
-      time: "9:00 AM - 5:00 PM",
-      image: `${config.api.host}${ImageFile}cyber.png?height=300&width=400`,
-      rules: "Individual participation only. Participants will face a series of increasingly difficult cybersecurity challenges.",
-      regFees: 80,
-      pdf:'',
-      isTeamEvent: false,
-      minParticipants: 1,
-      maxParticipants: 1,
-      coordinators: [
-        { name: "Prof. David Wilson", email: "david.wilson@globaltech.edu", phone: "+1 (555) 789-0123", isFaculty: true }
-      ],
-      registrationOpen: true
-    }
-  ]
+  id: "",
+  name: "",
+  institution: "",
+  category: "",
+  location: "",
+  gpsLink: "",
+  description: "",
+  duration: "",
+  coordinators: [],
+  image: "",
+  programs: []
 }
 
 const setBookMark = async (userId: string, type: string, action: string, bookMarkId: string) => {
@@ -310,13 +214,11 @@ export default function Component() {
         toast.error("Plese Complete You Profile In Order To Register")
         return false
       }
-      return true
-    }
-    const check = checkFullProfile()
-    if(check){
       setProgramId(programId)
       router.push('/event/reg')
+      return true
     }
+    checkFullProfile()
   }
 
   return (

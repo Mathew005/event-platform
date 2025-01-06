@@ -19,56 +19,11 @@ import { useEventContext } from '@/components/contexts/EventContext'
 import { useUserContext } from '@/components/contexts/UserContext'
 import { useRouter } from 'next/navigation'
 
-// Mock data for demonstration purposes
-
 const analysisDataBase ={
-  events:[
-    // { id: 1, name: "AI Workshop", type: "group" },
-    // { id: 2, name: "Tech Conference 2023", type: "solo" },
-    // { id: 3, name: "Annual Charity Gala", type: "group" },
-    // { id: 4, name: "Hackathon 2023", type: "group" },
-    // { id: 5, name: "Data Science Symposium", type: "solo" },
-  ],
-  registrationData: [
-    // { id: 1, name: "John Doe", contact: "123-456-7890", email: "john@example.com", eventId: 1, collegeName: "MIT", eventType: "group", participants: 3, department: "Computer Science", course: "AI and Machine Learning", registrationTime: "2023-09-15T10:30:00" },
-    // { id: 2, name: "Jane Smith", contact: "098-765-4321", email: "jane@example.com", eventId: 2, collegeName: "Stanford", eventType: "solo", participants: 1, department: "Electrical Engineering", course: "Robotics", registrationTime: "2023-09-16T14:45:00" },
-    // { id: 3, name: "Alice Johnson", contact: "111-222-3333", email: "alice@example.com", eventId: 3, collegeName: "Harvard", eventType: "group", participants: 4, department: "Business", course: "Entrepreneurship", registrationTime: "2023-09-17T09:15:00" },
-    // { id: 4, name: "Bob Williams", contact: "444-555-6666", email: "bob@example.com", eventId: 4, collegeName: "CalTech", eventType: "group", participants: 3, department: "Physics", course: "Quantum Computing", registrationTime: "2023-09-18T11:00:00" },
-    // { id: 5, name: "Charlie Brown", contact: "777-888-9999", email: "charlie@example.com", eventId: 5, collegeName: "UCLA", eventType: "solo", participants: 1, department: "Statistics", course: "Machine Learning", registrationTime: "2023-09-19T13:30:00" },
-    // { id: 6, name: "Diana Prince", contact: "000-111-2222", email: "diana@example.com", eventId: 1, collegeName: "NYU", eventType: "group", participants: 2, department: "Computer Science", course: "Natural Language Processing", registrationTime: "2023-09-20T15:45:00" },
-    // { id: 7, name: "Ethan Hunt", contact: "333-444-5555", email: "ethan@example.com", eventId: 2, collegeName: "UC Berkeley", eventType: "solo", participants: 1, department: "Computer Engineering", course: "Cybersecurity", registrationTime: "2023-09-21T10:00:00" },
-    // { id: 8, name: "Fiona Gallagher", contact: "666-777-8888", email: "fiona@example.com", eventId: 3, collegeName: "Columbia", eventType: "group", participants: 3, department: "Economics", course: "Fintech", registrationTime: "2023-09-22T14:15:00" },
-    // { id: 9, name: "George Costanza", contact: "999-000-1111", email: "george@example.com", eventId: 4, collegeName: "Princeton", eventType: "group", participants: 4, department: "Mathematics", course: "Cryptography", registrationTime: "2023-09-23T09:30:00" },
-    // { id: 10, name: "Hermione Granger", contact: "222-333-4444", email: "hermione@example.com", eventId: 5, collegeName: "Oxford", eventType: "solo", participants: 1, department: "Data Science", course: "Big Data Analytics", registrationTime: "2023-09-24T11:45:00" },
-  ],
+  events:[],
+  registrationData: [],
 
-  groupMembers: {
-    // 1: [
-    //   { name: "Team Member 1", contact: "111-111-1111", email: "member1@example.com" },
-    //   { name: "Team Member 2", contact: "222-222-2222", email: "member2@example.com" },
-    // ],
-    // 3: [
-    //   { name: "Team Member A", contact: "333-333-3333", email: "memberA@example.com" },
-    //   { name: "Team Member B", contact: "444-444-4444", email: "memberB@example.com" },
-    //   { name: "Team Member C", contact: "555-555-5555", email: "memberC@example.com" },
-    // ],
-    // 4: [
-    //   { name: "Team Member X", contact: "666-666-6666", email: "memberX@example.com" },
-    //   { name: "Team Member Y", contact: "777-777-7777", email: "memberY@example.com" },
-    // ],
-    // 6: [
-    //   { name: "Team Member Z", contact: "888-888-8888", email: "memberZ@example.com" },
-    // ],
-    // 8: [
-    //   { name: "Team Member D", contact: "999-999-9999", email: "memberD@example.com" },
-    //   { name: "Team Member E", contact: "000-000-0000", email: "memberE@example.com" },
-    // ],
-    // 9: [
-    //   { name: "Team Member F", contact: "111-111-0000", email: "memberF@example.com" },
-    //   { name: "Team Member G", contact: "222-222-0000", email: "memberG@example.com" },
-    //   { name: "Team Member H", contact: "333-333-0000", email: "memberH@example.com" },
-    // ],
-  }
+  groupMembers: {}
 }
 
 const allEventsHeaders = [

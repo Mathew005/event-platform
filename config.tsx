@@ -1,7 +1,5 @@
 const config = {
   api: {
-    // host: `http://${process.env.REACT_APP_API_IP}/cfc/`,
-    //host: `http://192.168.0.170/cfc/`,
     host: `http://localhost/cfc/`,
     routes: {
       auth: 'auth.php',

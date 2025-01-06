@@ -59,129 +59,37 @@ interface Event {
 }
 
 const participantDashboardDataBase = {
-  registrations: [
-    {
-      id: 0,
-      programId: 'P001',
-      image: `${config.api.host}${ImageFile}ai.jpg`,
-      programName: 'AI Workshop',
-      eventName: 'Tech Summit 2024',
-      institute: 'Tech Institute',
-      date: '2025-09-20',
-      registrationId: 'TS2024-001',
-      eventID: "1",
-      category: 'Workshop',
-      gpsLink: "http://localhost:3000/profile",
-      rules: 'Bring your own laptop. Prior programming experience required.',
-      pdf: "http://localhost/cfc/files/docs/docs_67799c8d2cfde5.39975639.jpg",
-      location: 'Tech Center',
-      venue: 'Hall A',
-      time: '10:00 AM - 4:00 PM',
-      members: ['John Doe'],
-      amountPaid: 50
-    },
-    {
-      id: 1,
-      programId: 'P002',
-      image: `${config.api.host}${ImageFile}coding.jpg`,
-      programName: 'Data Science Bootcamp',
-      eventName: 'Data Analytics Conference',
-      institute: 'Data Science Academy',
-      date: '2025-09-25',
-      eventID: "1",
-      registrationId: 'DAC2024-002',
-      category: 'Bootcamp',
-      rules: 'Participants must have basic knowledge of statistics and programming.',
-      gpsLink: "http://localhost:3000/profile",
-      location: 'Data Science Campus',
-      pdf: "http://localhost/cfc/files/docs/docs_67799c8d2cfde5.39975639.jpg",
-      venue: 'Building B, Room 201',
-      time: '9:00 AM - 5:00 PM',
-      members: ['Jane Smith', 'Mike Johnson'],
-      amountPaid: 150
-    },
-    {
-      id: 2,
-      programId: 'P003',
-      image: `${config.api.host}${ImageFile}semi.png`,
-      programName: 'Cybersecurity Seminar',
-      eventName: 'InfoSec World 2024',
-      institute: 'Cyber Defense Institute',
-      date: '2024-09-30',
-      eventID: "1",
-      registrationId: 'ISW2024-003',
-      category: 'Seminar',
-      rules: 'Open to all IT professionals. NDA must be signed before attendance.',
-      gpsLink: "http://localhost:3000/profile",
-      pdf: "http://localhost/cfc/files/docs/docs_67799c8d2cfde5.39975639.jpg",
-      location: 'Virtual Event',
-      venue: 'Online Platform',
-      time: '1:00 PM - 4:00 PM',
-      members: ['Alice Cooper'],
-      amountPaid: 75
-    }
-  ],
-  bookmarkedPrograms: [
-    {
-      id: 0,
-      programId: 'P004',
-      image: `${config.api.host}${ImageFile}web designning.jpeg`,
-      title: 'Web Development Workshop',
-      location: 'Tech Hub',
-      date: '2024-10-05',
-    },
-    {
-      id: 1,
-      programId: 'P005',
-      image: `${config.api.host}${ImageFile}blockchain.jpeg`,
-      title: 'Blockchain Fundamentals',
-      location: 'Innovation Center',
-      date: '2025-10-10',
-    }
-  ],
-  bookmarkedEvents: [
-    {
-      id: 0,
-      eventId: 'E001',
-      image: `${config.api.host}${ImageFile}`,
-      title: 'Tech Summit 2024',
-      date: '2024-09-20',
-      location: 'Tech Center'
-    },
-    {
-      id: 1,
-      eventId: 'E002',
-      image: `${config.api.host}${ImageFile}`,
-      title: 'Data Analytics Conference',
-      date: '2024-09-25',
-      location: 'Data Science Campus'
-    },
-    {
-      id: 2,
-      eventId: 'E003',
-      image: `${config.api.host}${ImageFile}`,
-      title: 'InfoSec World 2024',
-      date: '2024-09-30',
-      location: 'Virtual Event'
-    }
-  ]
+  registrations: [],
+  bookmarkedPrograms: [],
+  bookmarkedEvents: []
 }
 
-function EmptyState({ message }: { message: string }) {
+const setBookMark = async (userId: string, type: string, action: string, bookMarkId: string) => {
+  try {
+    const response = await axios.get(`${config.api.host}${config.api.routes.bookmark}`, {
+      params: { userId, type, action, bookMarkId}
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error saving bookmarks data:', error)
+    return null
+  }
+}
+
+function EmptyState({ message, icon: Icon }: { message: string; icon?: React.ElementType }) {
   return (
     <div className="text-center py-8">
+      {Icon && <Icon className="mx-auto h-12 w-12 text-gray-400 mb-4" />}
       <p className="text-gray-500">{message}</p>
     </div>
   )
 }
-
 
 const getParticipantDashboard = async (id: string) => {
   try {
     const response = await axios.get(`${config.api.host}${config.api.routes.participant_dashboard}`, {
       params:{id}
     });
-    // console.log(response.data)
     return response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -199,14 +107,14 @@ export default function ParticipantDashboard() {
   const { userId, setUserId, setUsertype } = useUserContext()
 
   useEffect(()=>{
-    setUserId('1')
+    // setUserId('1')
   },[])
 
   useEffect(() => {
+    // console.log
     const getData = async () => {
       if(userId){
         const data = await getParticipantDashboard(userId)
-        // console.log(data)
         setParticipantDashboardData(data)
         setBookmarkedEvents(data.bookmarkedEvents)
         setBookmarkedPrograms(data.bookmarkedPrograms)
@@ -219,20 +127,30 @@ export default function ParticipantDashboard() {
     router.push('/home');
   };
 
-
   const sortedRegistrations = useMemo(() => {
-    if(participantDashboardData){
+    if(participantDashboardData.registrations){
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return participantDashboardData.registrations.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())}
+    else{
+      return []
+    }
   }, [participantDashboardData.registrations])
 
   const toggleBookmark = (id: number, isEvent: boolean) => {
     if (isEvent) {
       setBookmarkedEvents(prev => prev.filter(event => event.id !== id))
+      const resposne = async () => {
+        await setBookMark(userId, "event", "remove", id.toString())
+      }
+      resposne()
       toast('Event Bookmark Removed');
     } else {
       setBookmarkedPrograms(prev => prev.filter(program => program.id !== id))
+      const resposne = async () => {
+        await setBookMark(userId, "program", "remove", id.toString())
+      }
+      resposne()
       toast('Program Bookmark Removed');
     }
   }
@@ -282,7 +200,7 @@ export default function ParticipantDashboard() {
                         <ProgramCard key={program.id} program={program} openDialog={openDialog} />
                       ))
                     ) : (
-                      <EmptyState message="No registered programs" />
+                      <EmptyState message="No registered programs" icon={Calendar} />
                     )}
                   </div>
                 </section>
@@ -298,7 +216,7 @@ export default function ParticipantDashboard() {
                         <ProgramCard key={program.id} program={program} openDialog={openDialog} />
                       ))
                     ) : (
-                      <EmptyState message="No program history" />
+                      <EmptyState message="No program history" icon={History} />
                     )}
                   </div>
                 </section>
@@ -325,7 +243,7 @@ export default function ParticipantDashboard() {
                         <BookmarkCard key={program.id} item={program} isEvent={false} onUnbookmark={() => toggleBookmark(program.id, false)} onViewDetails={() => {}} />
                       ))
                     ) : (
-                      <EmptyState message="No bookmarked programs" />
+                      <EmptyState message="No bookmarked programs" icon={Bookmark} />
                     )}
                   </div>
                 </TabsContent>
@@ -337,7 +255,7 @@ export default function ParticipantDashboard() {
                         <BookmarkCard key={event.id} item={event} isEvent={true} onUnbookmark={() => toggleBookmark(event.id, true)} onViewDetails={() => {}} />
                       ))
                     ) : (
-                      <EmptyState message="No bookmarked events" />
+                      <EmptyState message="No bookmarked events" icon={Calendar} />
                     )}
                   </div>
                 </TabsContent>
@@ -408,18 +326,15 @@ export default function ParticipantDashboard() {
 }
 
 function ProgramCard({ program, openDialog}: { program: Program; openDialog: (program: Program) => void}) {
-  
   const router = useRouter();
   const { eventId, setEventId , programId, setProgramId} = useEventContext()
   
   const handleView = (program: Program) => {
-    // console.log(program)
     const pid = program.programId
     const eid = program.eventId
     if(pid && eid){
       setEventId(eid)
       setProgramId(pid)
-      // console.log("Event: ", eid, "Program: ", pid)
       router.push('/event')
     }
   }
@@ -437,9 +352,7 @@ function ProgramCard({ program, openDialog}: { program: Program; openDialog: (pr
         </div>
       </div>
       <div className="text-right">
-        
-          <Button onClick={()=>{handleView(program)}} variant="outline" size="sm" className="w-15 mr-2 md:w-24 bg-white text-black hover:bg-gray-200">View</Button>
-        
+        <Button onClick={() => handleView(program)} variant="outline" size="sm" className="w-15 mr-2 md:w-24 bg-white text-black hover:bg-gray-200">View</Button>
         <div className="mt-2">
           <Button onClick={() => openDialog(program)} variant="outline" size="sm" className="w-14 mr-2 md:w-24 bg-black text-white hover:bg-gray-800">Details</Button>
         </div>
@@ -457,12 +370,8 @@ function BookmarkCard({ item, isEvent, onUnbookmark, onViewDetails }: { item: Bo
 
   const handleViewDetails = () => {
     if (isEvent) {
-      // Placeholder for event details navigation
       console.log('Navigate to event details')
-      // router.push(`/event/${(item as Event).eventId}`)
     } else {
-      // Placeholder for program details navigation
-      console.log('Navigate to program details')
       router.push(`/program/${(item as BookmarkedProgram).programId}`)
     }
   }

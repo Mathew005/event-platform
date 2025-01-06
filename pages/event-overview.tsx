@@ -38,6 +38,7 @@ type Coordinator = {
   role: string;
   email: string;
   phone: string;
+  faculty: string;
 }
 
 type Program = {
@@ -45,6 +46,7 @@ type Program = {
   name: string;
   type: string;
   date: string;
+  pdf: string;
   venue: string;
   time: string;
   regFee: number;
@@ -75,74 +77,38 @@ type Event = {
 const ImageFile = 'files/imgs/defaults/events/'
 
 const eventbase: Event = {
-  id: '1',
-  title: 'Tech Innovation Summit 2023',
-  description: 'Join us for a day of cutting-edge technology discussions and networking opportunities with industry leaders.',
-  image: `${config.api.host}${ImageFile}ai.jpg?height=400&width=800`,
-  eventType: 'Conference',
-  date: '2023-09-15T09:00:00',
-  location: 'San Francisco Convention Center, CA',
+  id: '',
+  title: '',
+  description: '',
+  image: ``,
+  eventType: '',
+  date: '',
+  location: '',
+  status:'scheduled',
+  view:'staged',
   coordinators: [
-    { name: 'John Doe', role: 'Event Manager', email: 'john@example.com', phone: '+1 123-456-7890' },
-    { name: 'Jane Smith', role: 'Technical Coordinator', email: 'jane@example.com', phone: '+1 098-765-4321' },
+    { name: '', role: '', email: '', phone: '', faculty: "" },
   ],
   programs: [
     {
-      id: '1',
-      name: 'AI in Healthcare',
-      type: 'Workshop',
-      date: '2023-09-15',
-      venue: 'Main Hall',
-      time: '10:00 - 11:30',
-      regFee: 50,
-      image: `${config.api.host}${ImageFile}ai-health.jpg?height=200&width=200`,
-      rulesRegulations: 'Participants must bring their own laptops. No prior experience required.',
-      rulesRegulationsFile: '/ai-workshop-rules.pdf',
+      id: '',
+      name: '',
+      type: '',
+      pdf: "",
+      date: '',
+      venue: '',
+      time: '',
+      regFee: 0,
+      image: ``,
+      rulesRegulations: '',
+      rulesRegulationsFile: '',
       isTeamEvent: false,
       coordinators: [
-        { name: 'Dr. Alice Johnson', role: 'AI Specialist', email: 'alice@example.com', phone: '+1 111-222-3333' },
+        { name: '', role: '', email: '', phone: '' , faculty: ""},
       ],
       status: 'open',
-    },
-    {
-      id: '2',
-      name: 'Future of Blockchain',
-      type: 'Panel Discussion',
-      date: '2023-09-15',
-      venue: 'Workshop Room A',
-      time: '13:00 - 14:30',
-      regFee: 75,
-      image: `${config.api.host}${ImageFile}blockchain.jpeg?height=200&width=200`,
-      rulesRegulations: 'Open to all attendees. Q&A session included.',
-      rulesRegulationsFile: '/blockchain-panel-rules.pdf',
-      isTeamEvent: false,
-      coordinators: [
-        { name: 'Bob Smith', role: 'Blockchain Expert', email: 'bob@example.com', phone: '+1 444-555-6666' },
-      ],
-      status: 'open',
-    },
-    {
-      id: '3',
-      name: 'Cybersecurity Challenge',
-      type: 'Team Competition',
-      date: '2023-09-15',
-      venue: 'Conference Room B',
-      time: '15:00 - 16:30',
-      regFee: 60,
-      image: `${config.api.host}${ImageFile}cyber.png?height=200&width=200`,
-      rulesRegulations: 'Teams of 2-4 members. Basic coding knowledge required.',
-      rulesRegulationsFile: '/cybersecurity-challenge-rules.pdf',
-      isTeamEvent: true,
-      minParticipants: 2,
-      maxParticipants: 4,
-      coordinators: [
-        { name: 'Charlie Brown', role: 'Security Expert', email: 'charlie@example.com', phone: '+1 777-888-9999' },
-      ],
-      status: 'open',
-    },
-  ],
-  status: 'scheduled',
-  view: 'staged',
+    }
+  ]
 }
 
 const fetchData = async (table: string, id: string, columnIdentifier: string, columnTargets: string[]) => {
@@ -174,6 +140,7 @@ const getEventOverviewData = async (id: string) => {
     const response = await axios.get(`${config.api.host}${config.api.routes.event_overview}`,{
       params:{id}
     })
+    console.log(response.data)
     return response.data
   } catch (error) {
     console.error('Error fetching data:', error)
@@ -272,8 +239,7 @@ useEffect(() => {
     setCurrentEvent(prev => ({ ...prev, view: 'published' }))
     const request = async () =>{
       await saveData("events", currentEvent.id, "EID","Published", "1")
-    } 
-
+    }
     request()
   }
 
@@ -282,7 +248,6 @@ useEffect(() => {
     const request = async () =>{
       await saveData("events", currentEvent.id, "EID","Published", "0")
     } 
-
     request()
   }
 
@@ -299,6 +264,11 @@ useEffect(() => {
     setEventId(id)
     setProgramId('')
     router.push('/dashboard/organizer/create/program')
+  }
+
+  const handleEventEdit = (id:string) => {
+    setEventId(id)
+    router.push('/dashboard/organizer/create/event')
   }
 
   const handleProgramEdit = (id:string) => {
@@ -418,14 +388,14 @@ useEffect(() => {
               <li key={index}>
                 <div className="font-medium">{coordinator.name} - {coordinator.role}</div>
                 <div className="text-sm text-gray-600">
-                  {coordinator.email} | {coordinator.phone}
+                  {coordinator.email} | {coordinator.phone}{(coordinator.faculty == '1')?' | Faculty Coordinator':''}
                 </div>
               </li>
             ))}
           </ul>
         </div>
         <div className="flex justify-between items-center">
-          <Button>
+          <Button onClick={() => {handleEventEdit(eventId)}}>
             <Edit className="mr-2 h-4 w-4" /> Edit Event
           </Button>
           {currentEvent.status !== 'cancelled' && (
@@ -578,7 +548,9 @@ useEffect(() => {
                           <div>
                             <h4 className="font-semibold">Rules and Regulations</h4>
                             <p>{program.rulesRegulations}</p>
-                            <Button variant="outline" className="mt-2">
+                            <Button onClick={()=>{
+                              window.open(program.rulesRegulationsFile)
+                            }}variant="outline" className="mt-2">
                               <Download className="mr-2 h-4 w-4" /> Download Rules PDF
                             </Button>
                           </div>
@@ -589,7 +561,7 @@ useEffect(() => {
                                 <li key={index}>
                                   <div>{coordinator.name} - {coordinator.role}</div>
                                   <div className="text-sm text-gray-600">
-                                    {coordinator.email} | {coordinator.phone}
+                                    {coordinator.email} | {coordinator.phone}{(coordinator.faculty == '1')?' | Faculty Coordinator':''}
                                   </div>
                                 </li>
                               ))}

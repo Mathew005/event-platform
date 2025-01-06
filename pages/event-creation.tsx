@@ -164,7 +164,7 @@ export default function Component() {
   }
 
   useEffect(() => {
-    setUserId('1')
+    // setUserId('1')
     // setEventId('7')
   }, [])
 

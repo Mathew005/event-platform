@@ -27,58 +27,7 @@ type Event = {
   description: string
 }
 
-const eventsBase: Event[] = [
-  {
-    id: '1',
-    name: 'Tech Conference 2023',
-    date: '2023-09-15T09:00:00',
-    location: 'San Francisco Convention Center, CA',
-    status: 'scheduled',
-    view: 'published',
-    image: `${config.api.host}${ImageFile}tech_confernce.jpg?height=200&width=200`,
-    description: 'Annual tech conference featuring the latest in AI and machine learning.'
-  },
-  {
-    id: '2',
-    name: 'Annual Charity Gala',
-    date: '2023-08-20T19:00:00',
-    location: 'Ritz-Carlton, New York, NY',
-    status: 'commencing',
-    view: 'published',
-    image: `${config.api.host}${ImageFile}charoty.jpg?height=200&width=200`,
-    description: 'Elegant evening supporting local charities with dinner and silent auction.'
-  },
-  {
-    id: '3',
-    name: 'Summer Music Festival',
-    date: '2023-07-01T12:00:00',
-    location: 'Griffith Park, Los Angeles, CA',
-    status: 'concluded',
-    view: 'published',
-    image: `${config.api.host}${ImageFile}sumer.jpg?height=200&width=200`,
-    description: 'Three-day outdoor music festival featuring top artists across multiple genres.'
-  },
-  {
-    id: '4',
-    name: 'AI Workshop',
-    date: '2023-10-05T10:00:00',
-    location: 'MIT Campus, Boston, MA',
-    status: 'scheduled',
-    view: 'staged',
-    image: `${config.api.host}${ImageFile}ai.jpg?height=200&width=200`,
-    description: 'Hands-on workshop exploring practical applications of artificial intelligence.'
-  },
-  {
-    id: '5',
-    name: 'Startup Pitch Night',
-    date: '2023-06-30T18:00:00',
-    location: 'Capital Factory, Austin, TX',
-    status: 'cancelled',
-    view: 'staged',
-    image: `${config.api.host}${ImageFile}?height=200&width=200`,
-    description: 'Evening showcase of innovative startups pitching to potential investors.'
-  }
-]
+const eventsBase: Event[] = []
 
 // Simulating an async function to fetch published events
 
@@ -200,6 +149,7 @@ const publishedEventsPromise = fetchPublishedEvents()
         toast.error("Please Complete The Profile To Create An Event")
         return false
       }
+      setEventId('')
       router.push('/dashboard/organizer/create/event')
     }
     checkProfile()
