@@ -43,10 +43,10 @@ Some underused features, such as **interests**, can be easily implemented in the
 ## Features
 
 - **Login / Register Page**: For user authentication.
-- **Homepage**: General information and navigation.
+- **Homepage**: For browsing events, programs and navigation.
 - **Profile Page**: User profile management.
-- **Organizer Dashboard**: For event management.
-- **Participant Dashboard**: For browsing events and programs.
+- **Organizer Dashboard**: For managing created events and programs.
+- **Participant Dashboard**: For viewing registered programs.
 - **Event/Program Creation Page**: Organizers can create events or programs.
 - **Event/Program Overview**: Overview page for events and programs.
 - **Registration & Analytics Page**: View registration details and download analytics in XLSX/PDF formats.
