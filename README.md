@@ -57,6 +57,10 @@ Some underused features, such as **interests**, can be easily implemented in the
 - **TailwindCSS**
 - **V0 Libraries** (A lot of V0 implementations)
 
+## Home Page
+
+[![Watch the video](https://github.com/Mathew005/event-platform/raw/refs/heads/main/vids/homePage.mp4)](https://github.com/Mathew005/event-platform/raw/refs/heads/main/vids/homePage.mp4)
+
 ## Author
 
 - **Mathew005**
