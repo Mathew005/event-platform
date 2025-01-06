@@ -26,7 +26,7 @@ Some underused features, such as **interests**, can be easily implemented in the
 2. **Install Dependencies**:
     Navigate to the project folder and install the required dependencies:
     ```bash
-    cd cfc-frontend
+    cd event-platform
     npm install
     # Or if there are dependency issues, try:
     npm install --force
