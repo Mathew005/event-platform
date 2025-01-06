@@ -209,34 +209,34 @@ export default function Component({ifLogin}:ifLogin) {
               {passwordError && <div className="text-red-500">{passwordError}</div>}
               
               <div className="space-y-2">
-                <Label htmlFor="contactNumber">Contact Number</Label>
-                <div className="flex space-x-2">
-                  <Select name="countryCode" defaultValue="+91">
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Code" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countryCodes.map((code) => (
-                        <SelectItem key={code.value} value={code.value}>
-                          {code.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input 
-                    id="contactNumber" 
-                    name="contactNumber" 
-                    type="tel" 
-                    required 
-                    className="flex-1" 
-                    pattern="[0-9]*" 
-                    inputMode="numeric" 
-                    onInput={(e) => {
-                      e.target.value = e.target.value.replace(/[^0-9]/g, '');
-                    }}
-                  />
-                </div>
-              </div>
+  <Label htmlFor="contactNumber">Contact Number</Label>
+  <div className="flex space-x-2">
+    <Select name="countryCode" defaultValue="+91">
+      <SelectTrigger className="w-[120px]">
+        <SelectValue placeholder="Code" />
+      </SelectTrigger>
+      <SelectContent>
+        {countryCodes.map((code) => (
+          <SelectItem key={code.value} value={code.value}>
+            {code.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    <Input 
+      id="contactNumber" 
+      name="contactNumber" 
+      type="tel" 
+      required 
+      className="flex-1" 
+      pattern="^[0-9]{10}$" // This enforces a 10-digit pattern
+      inputMode="numeric" 
+      onInput={(e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, ''); // Strip non-numeric characters
+      }}
+    />
+  </div>
+</div>
               
               {userType === 'organizer' && (
                 <div className="space-y-2">

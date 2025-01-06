@@ -596,6 +596,9 @@ export default function Component() {
                           />
                           <Input
                             placeholder="Phone"
+                            type="tel" 
+                            inputMode="numeric" 
+                            pattern="^[0-9]{10}$"
                             value={coordinator.phone}
                             onChange={(e) => {
                               const newCoordinators = [...coordinators]

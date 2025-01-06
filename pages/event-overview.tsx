@@ -297,6 +297,7 @@ useEffect(() => {
 
   const handleAdd = (id:string) => {
     setEventId(id)
+    setProgramId('')
     router.push('/dashboard/organizer/create/program')
   }
 

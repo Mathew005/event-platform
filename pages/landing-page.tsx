@@ -61,16 +61,16 @@ const categoriesAndSubs = {
 
 
 const eventsAndProgram = [
-  { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-15", time: "2:00 PM", location: "thiruvananthapuram", categories: ["culture", "music"], institute: "Kerala Music Institute" },
-  { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}tech_confernce.jpg`, date: "2024-08-22", time: "9:00 AM", location: "palakkad", categories: ["technology", "education"], institute: "Tech Innovators Association" },
-  { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}wine_tasting.jpg`, date: "2024-09-10", time: "11:00 AM", location: "kozhikode", categories: ["food", "culture"], institute: "Culinary Arts Foundation" },
-  { id: 4, type: 'event', title: "Art Gallery Opening", image: `${config.api.host}${ImageFile}art-gallery.jpg`, date: "2024-10-05", time: "7:00 PM", location: "malappuram", categories: ["culture", "art"], institute: "Kerala Arts Council" },
-  { id: 5, type: 'event', title: "Marathon 2024", image: `${config.api.host}${ImageFile}marathon.webp`, date: "2024-11-12", time: "7:00 AM", location: "ernakulam", categories: ["sports", "health"], institute: "Kerala Athletics Association" },
-  { id: 1, type: 'program', eventId: 1, title: "Classical Music Concert", image: `${config.api.host}${ImageFile}classical_music.jpg`, date: "2024-07-16", time: "6:00 PM", venue: "Town Hall Auditorium", category: "culture", subcategory: "music", event: "Summer Music Festival" },
-  { id: 2, type: 'program', eventId: 1, title: "Folk Dance Workshop", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-17", time: "10:00 AM", venue: "Cultural Center", category: "culture", subcategory: "dance", event: "Summer Music Festival" },
-  { id: 3, type: 'program', eventId: 2, title: "AI in Healthcare Seminar", image: `${config.api.host}${ImageFile}ai.jpg`, date: "2024-08-23", time: "10:00 AM", venue: "Tech Center", category: "technology", subcategory: "ai", event: "Tech Conference 2024" },
-  { id: 4, type: 'program', eventId: 2, title: "Blockchain Workshop", image: `${config.api.host}${ImageFile}blockchain.jpg`, date: "2024-08-24", time: "2:00 PM", venue: "Innovation Hub", category: "technology", subcategory: "blockchain", event: "Tech Conference 2024" },
-  { id: 5, type: 'program', eventId: 3, title: "Wine Tasting Session", image: `${config.api.host}${ImageFile}wine_tasting2.jpg`, date: "2024-09-11", time: "2:00 PM", venue: "Grand Hotel", category: "food", subcategory: "wine", event: "Food & Wine Expo" },
+  // { id: 1, type: 'event', title: "Summer Music Festival", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-15", time: "2:00 PM", location: "thiruvananthapuram", categories: ["culture", "music"], institute: "Kerala Music Institute" },
+  // { id: 2, type: 'event', title: "Tech Conference 2024", image: `${config.api.host}${ImageFile}tech_confernce.jpg`, date: "2024-08-22", time: "9:00 AM", location: "palakkad", categories: ["technology", "education"], institute: "Tech Innovators Association" },
+  // { id: 3, type: 'event', title: "Food & Wine Expo", image: `${config.api.host}${ImageFile}wine_tasting.jpg`, date: "2024-09-10", time: "11:00 AM", location: "kozhikode", categories: ["food", "culture"], institute: "Culinary Arts Foundation" },
+  // { id: 4, type: 'event', title: "Art Gallery Opening", image: `${config.api.host}${ImageFile}art-gallery.jpg`, date: "2024-10-05", time: "7:00 PM", location: "malappuram", categories: ["culture", "art"], institute: "Kerala Arts Council" },
+  // { id: 5, type: 'event', title: "Marathon 2024", image: `${config.api.host}${ImageFile}marathon.webp`, date: "2024-11-12", time: "7:00 AM", location: "ernakulam", categories: ["sports", "health"], institute: "Kerala Athletics Association" },
+  // { id: 1, type: 'program', eventId: 1, title: "Classical Music Concert", image: `${config.api.host}${ImageFile}classical_music.jpg`, date: "2024-07-16", time: "6:00 PM", venue: "Town Hall Auditorium", category: "culture", subcategory: "music", event: "Summer Music Festival" },
+  // { id: 2, type: 'program', eventId: 1, title: "Folk Dance Workshop", image: `${config.api.host}${ImageFile}dance.jpg`, date: "2024-07-17", time: "10:00 AM", venue: "Cultural Center", category: "culture", subcategory: "dance", event: "Summer Music Festival" },
+  // { id: 3, type: 'program', eventId: 2, title: "AI in Healthcare Seminar", image: `${config.api.host}${ImageFile}ai.jpg`, date: "2024-08-23", time: "10:00 AM", venue: "Tech Center", category: "technology", subcategory: "ai", event: "Tech Conference 2024" },
+  // { id: 4, type: 'program', eventId: 2, title: "Blockchain Workshop", image: `${config.api.host}${ImageFile}blockchain.jpg`, date: "2024-08-24", time: "2:00 PM", venue: "Innovation Hub", category: "technology", subcategory: "blockchain", event: "Tech Conference 2024" },
+  // { id: 5, type: 'program', eventId: 3, title: "Wine Tasting Session", image: `${config.api.host}${ImageFile}wine_tasting2.jpg`, date: "2024-09-11", time: "2:00 PM", venue: "Grand Hotel", category: "food", subcategory: "wine", event: "Food & Wine Expo" },
 ]
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)

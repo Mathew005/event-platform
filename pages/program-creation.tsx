@@ -190,7 +190,7 @@ export default function ProgramCreation() {
     const fetchEventData = async () => {
       if (eventId) {
         const eventData = await fetchData("Events", eventId, "EID", ["EName", "EStartDate", "EndDate", "EType"])
-        console.log(eventData)
+        // console.log(eventData)
         if (eventData) {
           setEventStartDate(new Date(eventData.EStartDate))
           setEventEndDate(new Date(eventData.EndDate))
@@ -453,6 +453,7 @@ export default function ProgramCreation() {
 
   const uploadFile = async (file: File) => {
     try {
+      // console.log(file)
       const formData = new FormData()
       formData.append('type', 'docs')
       formData.append('file', file)
@@ -466,6 +467,7 @@ export default function ProgramCreation() {
       if (uploadResponse.data.success) {
         setUploadedFileUrl(uploadResponse.data.url)
         handleFieldChange('rulesFile', uploadResponse.data.url)
+        // console.log(uploadResponse)
         return uploadResponse.data.url
       } else {
         throw new Error("Failed to upload file")
@@ -918,6 +920,9 @@ export default function ProgramCreation() {
                       <Input
                         placeholder="Phone"
                         value={coordinator.phone}
+                        type="tel" 
+                        inputMode="numeric" 
+                        pattern="^[0-9]{10}$"
                         onChange={(e) => {
                           const newCoordinators = [...coordinators]
                           newCoordinators[index].phone = e.target.value.replace(/\D/g, '')

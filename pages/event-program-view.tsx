@@ -9,7 +9,6 @@ import { Toaster,toast} from 'sonner'
 import { useUserContext } from '@/components/contexts/UserContext'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-import { register } from 'module'
 
 interface Coordinator {
   name: string
@@ -23,6 +22,7 @@ interface Program {
   name: string
   category: string
   date: string
+  pdf:string
   time: string
   image: string
   rules: string
@@ -71,6 +71,7 @@ const eventbase: Event = {
       name: "AI & Machine Learning Hackathon",
       category: "Competition",
       date: "September 15-16, 2023",
+      pdf:'',
       time: "9:00 AM - 9:00 PM",
       image: `${config.api.host}${ImageFile}ai.jpg?height=300&width=400`,
       rules: "Form teams of 2-4 members. Develop an AI solution for a real-world problem within 36 hours. All code must be original and created during the event.",
@@ -93,6 +94,7 @@ const eventbase: Event = {
       image: `${config.api.host}${ImageFile}blockchain.jpeg?height=300&width=400`,
       rules: "Basic programming knowledge required. Bring your own laptop. Limited to 50 participants.",
       regFees: 75,
+      pdf:'',
       isTeamEvent: false,
       minParticipants: 1,
       maxParticipants: 1,
@@ -111,6 +113,7 @@ const eventbase: Event = {
       rules: "Open to all attendees. Q&A session included. Seating is first-come, first-served.",
       regFees: 25,
       isTeamEvent: false,
+      pdf:'',
       minParticipants: 1,
       maxParticipants: 1,
       coordinators: [
@@ -127,6 +130,7 @@ const eventbase: Event = {
       image: `${config.api.host}${ImageFile}robotics.jpg?height=300&width=400`,
       rules: "Participants must pre-register to display their robots. All robots must comply with safety regulations.",
       regFees: 50,
+      pdf:'',
       isTeamEvent: true,
       minParticipants: 1,
       maxParticipants: 5,
@@ -145,6 +149,7 @@ const eventbase: Event = {
       image: `${config.api.host}${ImageFile}cyber.png?height=300&width=400`,
       rules: "Individual participation only. Participants will face a series of increasingly difficult cybersecurity challenges.",
       regFees: 80,
+      pdf:'',
       isTeamEvent: false,
       minParticipants: 1,
       maxParticipants: 1,
@@ -216,7 +221,7 @@ export default function Component() {
     const fillEventData = async () =>{
       if(eventId){
         const data = await getEventProgramData(eventId)
-        // console.log(data)
+        console.log(data)
         setOrgWebsite(data.organizer.website)
         setEvent(data);
         if(programId){
@@ -416,7 +421,7 @@ export default function Component() {
                       <p className="text-gray-600 mb-2">Time: {selectedProgram.time}</p>
                       <p className="text-gray-700 mb-2">{selectedProgram.rules}</p>
                       <a
-                        href="#"
+                        href={selectedProgram.pdf} target="_blank"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-2"
                       >
                         Download Rules PDF <Download className="ml-1" size={16} />
