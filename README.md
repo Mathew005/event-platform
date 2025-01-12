@@ -59,7 +59,7 @@ Some underused features, such as **interests**, can be easily implemented in the
 
 ## Home Page
 
-https://raw.githubusercontent.com/Mathew005/event-platform/main/vids/homePage.mp4
+https://user-images.githubusercontent.com/Mathew005/event-platform/main/vids/homePage.mp4
 
 ## Author
 
