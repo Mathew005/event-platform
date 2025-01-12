@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -131,11 +138,11 @@ export default function Component() {
 
   useEffect(() => {
     const fetchEventAndPrograms = async () => {
-        const data = await getData();
-        setEventsAndPrograms(data);
-        setEventLength(data.filter(item => item.type === 'event').length)
+      const data = await getData();
+      setEventsAndPrograms(data);
+      setEventLength(data.filter(item => item.type === 'event').length)
     };
-  
+
     fetchEventAndPrograms();
   }, []);
 
@@ -149,36 +156,36 @@ export default function Component() {
         setAvatar(`${config.api.host}${data[CTarget]}`);
       }
     };
-  
+
     setIsLoggedIn(userId !== undefined && userId !== '');
-  
+
     fetchAvatar();
   }, [userId]);
-  
+
   const handleDashboard = () => {
     router.push(`/dashboard/${usertype}`);
   }
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => 
+    setCurrentSlide((prev) =>
       (prev + 1) % eventLength
     );
-    resetTimer(8000); 
+    resetTimer(8000);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => 
-      (prev - 1 + eventLength) % 
-    eventLength
+    setCurrentSlide((prev) =>
+      (prev - 1 + eventLength) %
+      eventLength
     );
     resetTimer(8000);
   };
 
   const resetTimer = (timeout: number) => {
     if (slideIntervalRef.current) {
-      clearInterval(slideIntervalRef.current); 
+      clearInterval(slideIntervalRef.current);
     }
-    slideIntervalRef.current = setInterval(nextSlide, timeout); 
+    slideIntervalRef.current = setInterval(nextSlide, timeout);
   };
 
   useEffect(() => {
@@ -208,7 +215,7 @@ export default function Component() {
   const handleProfile = () => {
     router.push('/profile')
   }
-  
+
   const handleLogOut = () => {
     setUserId('');
     setUsername('');
@@ -225,8 +232,8 @@ export default function Component() {
       router.push('/event')
       return
       // Add your event handling logic here
-    } 
-    if(item.type == 'event') {
+    }
+    if (item.type == 'event') {
       console.log('Event clicked:', item.id);
       setEventId(item.id)
       router.push('/event')
@@ -234,7 +241,7 @@ export default function Component() {
       // Add your program handling logic here
     }
   };
-  
+
   function getInitials(fullName: string): string {
     const names = fullName.trim().split(' ');
     const initials = names.map(name => name.charAt(0).toUpperCase()).join('');
@@ -243,18 +250,18 @@ export default function Component() {
 
   const filteredItems = eventsAndPrograms.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (item.type === 'event' ? item.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())) : item.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (item.location && item.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (item.venue && item.venue.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (item.institute && item.institute.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (item.event && item.event.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesCategory = selectedCategory === "all" || 
-                            (item.type === 'event' ? item.categories.includes(selectedCategory.toLowerCase()) : item.category === selectedCategory.toLowerCase())
-    const matchesDistrict = selectedDistrict === "all" || 
-                            (item.type === 'event' && item.location === selectedDistrict) ||
-                            (item.type === 'program' && eventsAndPrograms.find(event => event.type === 'event' && event.id === item.eventId)?.location === selectedDistrict)
+      (item.type === 'event' ? item.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())) : item.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.location && item.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.venue && item.venue.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.institute && item.institute.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.event && item.event.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesCategory = selectedCategory === "all" ||
+      (item.type === 'event' ? item.categories.includes(selectedCategory.toLowerCase()) : item.category === selectedCategory.toLowerCase())
+    const matchesDistrict = selectedDistrict === "all" ||
+      (item.type === 'event' && item.location === selectedDistrict) ||
+      (item.type === 'program' && eventsAndPrograms.find(event => event.type === 'event' && event.id === item.eventId)?.location === selectedDistrict)
     const matchesType = showType === "all" || item.type === showType
-    const matchesDate = !dateRange || (dateRange?.from && dateRange?.to &&  new Date(item.date) >= new Date(dateRange.from) &&   new Date(item.date) <= new Date(dateRange.to))
+    const matchesDate = !dateRange || (dateRange?.from && dateRange?.to && new Date(item.date) >= new Date(dateRange.from) && new Date(item.date) <= new Date(dateRange.to))
     return matchesSearch && matchesCategory && matchesDistrict && matchesType && matchesDate
   })
 
@@ -312,73 +319,72 @@ export default function Component() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20">
         <section className="mb-12 relative">
           <h2 className="text-2xl font-bold mb-4">Featured Events</h2>
+
           {eventsAndPrograms.filter(item => item.type === 'event').length > 0 ? (
-          <div className="overflow-hidden rounded-lg">
-            <div
-              ref={carouselRef}
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{ width: `${eventsAndPrograms.filter(item => item.type === 'event').length * 100}%` }}
-            >
-              {eventsAndPrograms.filter(item => item.type === 'event').map((event) => (
-                <div key={event.id} className="w-full flex-shrink-0 relative cursor-pointer" onClick={() => handleCardClick(event)}>
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-[300px] sm:h-[400px] object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-4 sm:p-6">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {event.categories.map((category, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs sm:text-sm">
-                          {capitalize(category)}
-                        </Badge>
-                      ))}
+            <Carousel className="w-full">
+              <CarouselContent>
+                {eventsAndPrograms.filter(item => item.type === 'event').map((event) => (
+                  <CarouselItem key={event.id}>
+                    <div className="relative cursor-pointer" onClick={() => handleCardClick(event)}>
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="w-full h-[300px] sm:h-[400px] object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-4 sm:p-6">
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {event.categories.map((category, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs sm:text-sm">
+                              {capitalize(category)}
+                            </Badge>
+                          ))}
+                        </div>
+                        <h3 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-2">{event.title}</h3>
+                        <div className="flex items-center text-white mb-1 text-xs sm:text-base">
+                          <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                          <span>{event.time}</span>
+                        </div>
+                        <div className="flex items-center text-white mb-1 text-xs sm:text-base">
+                          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                          <span>{districts[event.location]}</span>
+                        </div>
+                        <div className="flex items-center text-white text-xs sm:text-base">
+                          <User className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                          <span>{event.institute}</span>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-2">{event.title}</h3>
-                    <div className="flex items-center text-white mb-1 text-xs sm:text-base">
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      <span>{event.time}</span>
-                    </div>
-                    <div className="flex items-center text-white mb-1 text-xs sm:text-base">
-                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      <span>{districts[event.location]}</span>
-                    </div>
-                    <div className="flex items-center text-white text-xs sm:text-base">
-                      <User className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      <span>{event.institute}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          ):(
-            <p>No featured events available at the moment.</p>)
-          }
-          {eventLength > 0 && 
-          <Button
-          variant="outline"
-          className="absolute left-4 top-1/2 transform -translate-y-1/2"
-          onClick={prevSlide}
-          aria-label="Previous slide"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-        }
-        {eventLength > 0 && 
-          <Button
-          variant="outline"
-          className="absolute right-4 top-1/2 transform -translate-y-1/2"
-          onClick={nextSlide}
-          aria-label="Next slide"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-          }
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+
+              <CarouselPrevious>
+                <Button
+                  variant="outline"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+              </CarouselPrevious>
+
+              <CarouselNext>
+                <Button
+                  variant="outline"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </CarouselNext>
+            </Carousel>
+          ) : (
+            <p>No featured events available at the moment.</p>
+          )}
         </section>
 
         <section id="events" className="mb-12">
-                
+
           <div className="sticky top-16 z-20">
             <div className="bg-gray-100 w-full">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -400,85 +406,85 @@ export default function Component() {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80">
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">Category</h4>
-                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Categories</SelectItem>
-                            {Object.keys(categoriesAndSubs).map((category) => (
-                              <SelectItem key={category} value={category}>{capitalize(category)}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">District</h4>
-                        <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select district" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Districts</SelectItem>
-                            {Object.entries(districts).map(([key, value]) => (
-                              <SelectItem key={key} value={key}>{value}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">Type</h4>
-                        <Select value={showType} onValueChange={setShowType}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Show type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="event">Events Only</SelectItem>
-                            <SelectItem value="program">Programs Only</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">Date</h4>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                            >
-                              {dateRange?.from ? (
-                                dateRange.to ? (
-                                  <>
-                                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                                    {format(dateRange.to, "LLL dd, y")}
-                                  </>
-                                ) : (
-                                  format(dateRange.from, "LLL dd, y")
-                                )
-                              ) : (
-                                <span>Pick a date range</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <DateCalendar
-                              initialFocus
-                              mode="range"
-                              defaultMonth={dateRange?.from}
-                              selected={dateRange}
-                              onSelect={setDateRange}
-                              numberOfMonths={2}
-                              disabled={{ before: new Date() }}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    </PopoverContent>
+                        <div className="grid gap-4">
+                          <div className="space-y-2">
+                            <h4 className="font-medium leading-none">Category</h4>
+                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Categories</SelectItem>
+                                {Object.keys(categoriesAndSubs).map((category) => (
+                                  <SelectItem key={category} value={category}>{capitalize(category)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium leading-none">District</h4>
+                            <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select district" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Districts</SelectItem>
+                                {Object.entries(districts).map(([key, value]) => (
+                                  <SelectItem key={key} value={key}>{value}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium leading-none">Type</h4>
+                            <Select value={showType} onValueChange={setShowType}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Show type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="event">Events Only</SelectItem>
+                                <SelectItem value="program">Programs Only</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium leading-none">Date</h4>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start text-left font-normal"
+                                >
+                                  {dateRange?.from ? (
+                                    dateRange.to ? (
+                                      <>
+                                        {format(dateRange.from, "LLL dd, y")} -{" "}
+                                        {format(dateRange.to, "LLL dd, y")}
+                                      </>
+                                    ) : (
+                                      format(dateRange.from, "LLL dd, y")
+                                    )
+                                  ) : (
+                                    <span>Pick a date range</span>
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <DateCalendar
+                                  initialFocus
+                                  mode="range"
+                                  defaultMonth={dateRange?.from}
+                                  selected={dateRange}
+                                  onSelect={setDateRange}
+                                  numberOfMonths={2}
+                                  disabled={{ before: new Date() }}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+                      </PopoverContent>
                     </Popover>
                   </div>
                 </div>
@@ -487,62 +493,62 @@ export default function Component() {
           </div>
 
           {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
-              <Card key={`${item.type}-${item.id}`} className="transition-transform">
-                <CardHeader className="p-0 relative">
-                  <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
-                </CardHeader>
-                <CardContent className="p-4">
-                  <CardTitle className="text-xl mb-2">{item.title}</CardTitle>
-                  <CardDescription suppressHydrationWarning={true}>
-                    <div className="flex items-center mt-2" >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span>{item.date}</span>
-                    </div>
-                    <div className="flex items-center mt-1">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{item.time}</span>
-                    </div>
-                    <div className="flex items-center mt-1">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span>
-                        {item.type === 'event' 
-                          ? districts[item.location] 
-                          : `${item.venue} (${districts[eventsAndPrograms.find(event => event.type === 'event' && event.id === item.eventId)?.location || '']})`}
-                      </span>
-                    </div>
-                    <div className="flex items-center mt-1">
-                      <User className="w-4 h-4 mr-2" />
-                      <span>{item.type === 'event' ? item.institute : `Part of: ${item.event}`}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge variant={item.type === 'event' ? 'default' : 'secondary'}>
-                        {capitalize(item.type)}
-                      </Badge>
-                      {item.type === 'event' 
-                        ? item.categories.map((category, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((item) => (
+                <Card key={`${item.type}-${item.id}`} className="transition-transform">
+                  <CardHeader className="p-0 relative">
+                    <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <CardTitle className="text-xl mb-2">{item.title}</CardTitle>
+                    <CardDescription suppressHydrationWarning={true}>
+                      <div className="flex items-center mt-2" >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{item.date}</span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{item.time}</span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <span>
+                          {item.type === 'event'
+                            ? districts[item.location]
+                            : `${item.venue} (${districts[eventsAndPrograms.find(event => event.type === 'event' && event.id === item.eventId)?.location || '']})`}
+                        </span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <User className="w-4 h-4 mr-2" />
+                        <span>{item.type === 'event' ? item.institute : `Part of: ${item.event}`}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant={item.type === 'event' ? 'default' : 'secondary'}>
+                          {capitalize(item.type)}
+                        </Badge>
+                        {item.type === 'event'
+                          ? item.categories.map((category, index) => (
                             <Badge key={index} variant="outline">{capitalize(category)}</Badge>
                           ))
-                        : (
-                          <>
-                            <Badge variant="outline">{capitalize(item.category)}</Badge>
-                            <Badge variant="outline">{capitalize(item.subcategory)}</Badge>
-                          </>
-                        )
-                      }
-                    </div>
-                  </CardDescription>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" onClick={() => {handleCardClick(item)}}>View Details</Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                          : (
+                            <>
+                              <Badge variant="outline">{capitalize(item.category)}</Badge>
+                              <Badge variant="outline">{capitalize(item.subcategory)}</Badge>
+                            </>
+                          )
+                        }
+                      </div>
+                    </CardDescription>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full" onClick={() => { handleCardClick(item) }}>View Details</Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           ) : (
-          <p>No events or programs match your current filters.</p>
-        )}
+            <p>No events or programs match your current filters.</p>
+          )}
         </section>
       </main>
     </div>
