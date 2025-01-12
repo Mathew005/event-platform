@@ -20,8 +20,6 @@ import { useUserContext } from '@/components/contexts/UserContext'
 import axios from 'axios'
 import { useEventContext } from '@/components/contexts/EventContext'
 
-const ImageFile = 'files/imgs/defaults/events/'
-
 const districts = {
   "thiruvananthapuram": "Thiruvananthapuram",
   "kollam": "Kollam",

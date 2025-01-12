@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { X, ArrowLeft, Eye, History, Calendar, MapPin, Plus, BarChart2 ,Text } from 'lucide-react'
+import { X, Eye, History, Calendar, MapPin, Plus, BarChart2 ,Text } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import config from '@/config'
 import axios from 'axios'
